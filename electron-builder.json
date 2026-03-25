@@ -2,27 +2,20 @@
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.yourcompany.yourapp",
   "asar": true,
-  "productName": "Your App Name",
+  "productName": "Notecord",
   "directories": {
     "output": "release/${version}"
   },
-  "files": [
-    "dist",
-    "dist-electron"
-  ],
+  "files": ["dist", "dist-electron"],
   "mac": {
-    "target": [
-      "dmg"
-    ],
+    "target": ["dmg"],
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
   "win": {
     "target": [
       {
         "target": "nsis",
-        "arch": [
-          "x64"
-        ]
+        "arch": ["x64"]
       }
     ],
     "artifactName": "${productName}-Windows-${version}-Setup.${ext}"

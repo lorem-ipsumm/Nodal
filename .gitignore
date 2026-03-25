@@ -27,3 +27,4 @@ dist-ssr
 release
 
 .env
+.rules
