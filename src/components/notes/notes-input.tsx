@@ -12,8 +12,7 @@ export const NotesInput = () => {
   >([]);
 
   const createNote = async () => {
-    const trimmed = content.trim();
-    if (!trimmed || !notesDirectory || !activeFolder) return;
+    if (!notesDirectory || !activeFolder) return;
 
     const folderPath = `${notesDirectory}/${activeFolder}`;
     const folderName = `${Date.now()}`;
@@ -21,11 +20,12 @@ export const NotesInput = () => {
     const notePath = `${folderPath}/${folderName}`;
 
     const imagesToAttach = pendingImages.map((img) => img.filePath);
+    if (content.length === 0 && imagesToAttach.length === 0) return;
     setContent("");
     setPendingImages([]);
     addNote({
       folderName,
-      content: trimmed,
+      content: content,
       timestamp,
       attachments: imagesToAttach.map((p) => p.split("/").pop()!),
       resolvedAttachments: pendingImages.map(({ filePath, dataUrl }) => ({
@@ -38,7 +38,7 @@ export const NotesInput = () => {
       "create-note",
       folderPath,
       folderName,
-      trimmed,
+      content,
     );
 
     if (imagesToAttach.length > 0) {
@@ -94,7 +94,7 @@ export const NotesInput = () => {
   return (
     <section className="p-4 -translate-x-1">
       <div
-        className="bg-popover rounded-lg h-full w-full flex flex-col"
+        className="bg-popover rounded-lg h-full w-full flex flex-col border"
         onPaste={handlePaste}
       >
         {pendingImages.length > 0 && (

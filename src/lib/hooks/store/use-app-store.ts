@@ -10,12 +10,14 @@ interface AppStore {
   notes: Note[];
   setNotes: (notes: Note[]) => void;
   addNote: (note: Note) => void;
+  removeNote: (folderName: string) => void;
+  updateNote: (folderName: string, content: string) => void;
 }
 
 export const useAppStore = create<AppStore>()(
   persist(
     (set) => ({
-      notesDirectory: "/home/lorem/Documents/my-notes",
+      notesDirectory: undefined,
       setNotesDirectory: (notesDirectory: string | undefined) =>
         set({ notesDirectory }),
       activeFolder: undefined,
@@ -25,11 +27,20 @@ export const useAppStore = create<AppStore>()(
       setNotes: (notes: Note[]) => set({ notes }),
       addNote: (note: Note) =>
         set((state) => ({ notes: [...state.notes, note] })),
+      removeNote: (folderName: string) =>
+        set((state) => ({
+          notes: state.notes.filter((n) => n.folderName !== folderName),
+        })),
+      updateNote: (folderName: string, content: string) =>
+        set((state) => ({
+          notes: state.notes.map((n) =>
+            n.folderName === folderName ? { ...n, content } : n,
+          ),
+        })),
     }),
     {
       name: "app-storage",
       partialize: (state) => ({
-        notesDirectory: state.notesDirectory,
         activeFolder: state.activeFolder,
       }),
     },

@@ -1,4 +1,5 @@
-import CodeMirror from "@uiw/react-codemirror";
+import CodeMirror, { ReactCodeMirrorRef } from "@uiw/react-codemirror";
+import { useEffect, useRef } from "react";
 import { markdown } from "@codemirror/lang-markdown";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
@@ -61,17 +62,28 @@ interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  onCancel?: () => void;
   placeholder?: string;
   className?: string;
+  autoFocus?: boolean;
 }
 
 export const MarkdownEditor = ({
   value,
   onChange,
   onSubmit,
+  onCancel,
   placeholder,
   className,
+  autoFocus,
 }: MarkdownEditorProps) => {
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
+
+  useEffect(() => {
+    if (autoFocus) {
+      editorRef.current?.view?.focus();
+    }
+  }, [autoFocus]);
   const submitKeymap = Prec.highest(
     keymap.of([
       {
@@ -79,6 +91,16 @@ export const MarkdownEditor = ({
         run: () => {
           onSubmit();
           return true;
+        },
+      },
+      {
+        key: "Escape",
+        run: () => {
+          if (onCancel) {
+            onCancel();
+            return true;
+          }
+          return false;
         },
       },
     ]),
@@ -94,6 +116,7 @@ export const MarkdownEditor = ({
 
   return (
     <CodeMirror
+      ref={editorRef}
       value={value}
       onChange={onChange}
       extensions={extensions}

@@ -4,6 +4,11 @@ import os from "node:os";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { update } from "./update";
+import Store from "electron-store";
+
+const store = new Store<{ workspace: string | undefined }>({
+  defaults: { workspace: undefined },
+});
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -72,6 +77,21 @@ app.on("activate", () => {
 });
 
 app.whenReady().then(createWindow);
+
+ipcMain.handle("get-workspace", () => {
+  return store.get("workspace");
+});
+
+ipcMain.handle("select-workspace", async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ["openDirectory"],
+    title: "Select Workspace Folder",
+  });
+  if (canceled || filePaths.length === 0) return null;
+  const selectedPath = filePaths[0];
+  store.set("workspace", selectedPath);
+  return selectedPath;
+});
 
 ipcMain.handle("get-folders", (_event, dirPath?: string) => {
   const targetPath = dirPath ?? app.getPath("desktop");
@@ -144,6 +164,14 @@ ipcMain.handle(
     });
   },
 );
+
+ipcMain.handle("delete-note", (_event, notePath: string) => {
+  fs.rmSync(notePath, { recursive: true, force: true });
+});
+
+ipcMain.handle("update-note", (_event, notePath: string, content: string) => {
+  fs.writeFileSync(path.join(notePath, "note.md"), content, "utf-8");
+});
 
 ipcMain.handle("get-notes", (_event, folderPath: string) => {
   const entries = fs.readdirSync(folderPath, { withFileTypes: true });

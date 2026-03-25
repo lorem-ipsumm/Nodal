@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
-import Markdown from "react-markdown";
-import { useAppStore } from "@/lib/hooks/store/use-app-store";
 import { Note } from "@/lib/types";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { useAppStore } from "@/lib/hooks/store/use-app-store";
+import { NoteItem } from "./note-item";
 
 const SCROLL_THRESHOLD = 100;
 
@@ -60,40 +59,7 @@ export const NotesContainer = () => {
       className="flex-1 px-3 py-2 overflow-y-auto flex flex-col gap-3"
     >
       {notes.map((note) => (
-        <div
-          key={note.folderName}
-          className="group rounded-lg px-4 py-3 hover:bg-popover"
-        >
-          <Markdown>{note.content}</Markdown>
-          {note.resolvedAttachments && note.resolvedAttachments.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {note.resolvedAttachments.map(({ fileName, dataUrl }) => (
-                <Dialog key={fileName}>
-                  <DialogTrigger className="cursor-zoom-in">
-                    <img
-                      src={dataUrl}
-                      alt={fileName}
-                      className="max-h-48 rounded-md object-cover"
-                    />
-                  </DialogTrigger>
-                  <DialogContent
-                    className="sm:max-w-[50vw] max-h-[90vh] flex items-center justify-center bg-transparent ring-0"
-                    showCloseButton
-                  >
-                    <img
-                      src={dataUrl}
-                      alt={fileName}
-                      className="max-w-full max-h-[calc(90vh-2rem)] object-contain rounded-md"
-                    />
-                  </DialogContent>
-                </Dialog>
-              ))}
-            </div>
-          )}
-          <span className="text-xs text-muted-foreground mt-2 block">
-            {new Date(note.timestamp).toLocaleString()}
-          </span>
-        </div>
+        <NoteItem key={note.folderName} note={note} />
       ))}
     </section>
   );
