@@ -14,16 +14,10 @@ import {
 } from "lucide-react";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+import { Dialog } from "./ui/dialog";
 import { ConfirmationDialog } from "./ui/confirmation-dialog";
+import { CreateFolderDialog } from "./create-folder-dialog";
 
 export const Sidebar = () => {
   const [folders, setFolders] = useState<string[]>([]);
@@ -31,7 +25,6 @@ export const Sidebar = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState<string | undefined>();
   const [createOpen, setCreateOpen] = useState(false);
-  const [newFolderName, setNewFolderName] = useState("");
   const [collapsed, setCollapsed] = useState(false);
   const { notesDirectory, setNotesDirectory, activeFolder, setActiveFolder } =
     useAppStore();
@@ -71,18 +64,6 @@ export const Sidebar = () => {
     });
   };
 
-  const handleCreateFolder = () => {
-    const name = newFolderName.trim();
-    if (!name || !notesDirectory) return;
-    const folderPath = `${notesDirectory}/${name}`;
-    window.ipcRenderer.invoke("create-folder", folderPath).then(() => {
-      setFolders((prev) => [...prev, name]);
-      setActiveFolder(name);
-      setNewFolderName("");
-      setCreateOpen(false);
-    });
-  };
-
   const handleSelectWorkspace = () => {
     window.ipcRenderer
       .invoke("select-workspace")
@@ -106,17 +87,22 @@ export const Sidebar = () => {
         collapsed ? "w-12" : "w-52",
       )}
     >
-      <section className="h-12 flex items-center px-3 gap-2 border-b mb-5 shrink-0">
+      <section
+        className={cn(
+          "h-12 flex items-center px-3 gap-2 border-b mb-5 shrink-0",
+          collapsed ? "justify-center" : "",
+        )}
+      >
         {!collapsed && (
           <>
             <NotebookPenIcon size={20} className="shrink-0" />
-            <span className="flex-1 truncate">Notes</span>
+            <span className="flex-1 truncate">Notecord</span>
           </>
         )}
         <Button
           variant="ghost"
           size="icon"
-          className={cn("h-6 w-6 shrink-0", !collapsed ? "ml-auto" : "mx-auto")}
+          className={cn("h-8 w-8", !collapsed ? "ml-auto" : "mx-auto")}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={() => setCollapsed((c) => !c)}
         >
@@ -178,7 +164,9 @@ export const Sidebar = () => {
                   <FolderIcon size={14} className="shrink-0" />
                   <span className="truncate">{folder}</span>
                   <div
-                    className="hidden group-hover:block absolute right-2 hover:text-destructive z-10"
+                    className={cn(
+                      "hidden group-hover:block absolute right-2 hover:text-destructive z-10",
+                    )}
                     onClick={(e) => handleDeleteFolder(folder, e)}
                   >
                     <Trash2 />
@@ -190,39 +178,11 @@ export const Sidebar = () => {
         )}
       </section>
 
-      <Dialog
+      <CreateFolderDialog
         open={createOpen}
-        onOpenChange={(open) => {
-          setCreateOpen(open);
-          if (!open) setNewFolderName("");
-        }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>New Folder</DialogTitle>
-          </DialogHeader>
-          <Input
-            autoFocus
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleCreateFolder();
-            }}
-            placeholder="Folder name..."
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateFolder}
-              disabled={!newFolderName.trim()}
-            >
-              Create
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setCreateOpen}
+        onCreated={(name) => setFolders((prev) => [...prev, name])}
+      />
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <ConfirmationDialog
@@ -232,11 +192,11 @@ export const Sidebar = () => {
         />
       </Dialog>
 
-      <section className="px-3 py-3 border-t shrink-0">
+      <section className="flex justify-center px-3 py-3 border-t shrink-0 w-full">
         <Button
           variant="ghost"
-          size={collapsed ? "icon" : "default"}
-          className={cn("justify-start gap-2", !collapsed && "w-full")}
+          size={"icon"}
+          className={cn("gap-2", !collapsed ? "w-full justify-start pl-3" : "")}
           onClick={toggleTheme}
         >
           {theme === "light" ? <MoonIcon size={14} /> : <SunIcon size={14} />}

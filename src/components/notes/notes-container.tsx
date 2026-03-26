@@ -4,6 +4,14 @@ import { useAppStore } from "@/lib/hooks/store/use-app-store";
 import { NoteItem } from "./note-item";
 
 const SCROLL_THRESHOLD = 100;
+const GROUP_WINDOW_MS = 5 * 60 * 1000;
+
+const isGroupStart = (notes: Note[], index: number): boolean => {
+  if (index === 0) return true;
+  const prev = notes[index - 1];
+  const curr = notes[index];
+  return curr.timestamp - prev.timestamp > GROUP_WINDOW_MS;
+};
 
 export const NotesContainer = () => {
   const { notesDirectory, activeFolder, notes, setNotes } = useAppStore();
@@ -44,7 +52,6 @@ export const NotesContainer = () => {
           }),
         );
         setNotes(resolved);
-        // Always scroll to bottom when switching folders
         requestAnimationFrame(scrollToBottom);
       });
   }, [notesDirectory, activeFolder, setNotes]);
@@ -56,10 +63,14 @@ export const NotesContainer = () => {
   return (
     <section
       ref={scrollRef}
-      className="flex-1 px-3 py-2 overflow-y-auto flex flex-col gap-3"
+      className="flex-1 px-3 py-2 overflow-y-auto flex flex-col"
     >
-      {notes.map((note) => (
-        <NoteItem key={note.folderName} note={note} />
+      {notes.map((note, index) => (
+        <NoteItem
+          key={note.folderName}
+          note={note}
+          isGroupStart={isGroupStart(notes, index)}
+        />
       ))}
     </section>
   );
