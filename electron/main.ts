@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
 import fs from "node:fs";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
@@ -37,6 +37,7 @@ let win: BrowserWindow | null;
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    frame: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
     },
@@ -165,8 +166,20 @@ ipcMain.handle(
   },
 );
 
+ipcMain.handle("open-external", (_event, url: string) => {
+  shell.openExternal(url);
+});
+
 ipcMain.handle("delete-note", (_event, notePath: string) => {
   fs.rmSync(notePath, { recursive: true, force: true });
+});
+
+ipcMain.handle("delete-folder", (_event, folderPath: string) => {
+  fs.rmSync(folderPath, { recursive: true, force: true });
+});
+
+ipcMain.handle("create-folder", (_event, folderPath: string) => {
+  fs.mkdirSync(folderPath, { recursive: true });
 });
 
 ipcMain.handle("update-note", (_event, notePath: string, content: string) => {

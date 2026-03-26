@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { markdown } from "@codemirror/lang-markdown";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
+import { GFM } from "@lezer/markdown";
 import { keymap, EditorView } from "@codemirror/view";
 import { Prec } from "@codemirror/state";
 
@@ -17,6 +18,12 @@ const markdownHighlight = HighlightStyle.define([
   { tag: tags.processingInstruction, opacity: "0.4" },
   { tag: tags.contentSeparator, opacity: "0.4" },
   { tag: tags.labelName, opacity: "0.4" },
+  {
+    tag: tags.url,
+    color: "var(--primary)",
+    textDecoration: "underline",
+    textUnderlineOffset: "2px",
+  },
 ]);
 
 const editorTheme = EditorView.theme({
@@ -107,7 +114,7 @@ export const MarkdownEditor = ({
   );
 
   const extensions = [
-    markdown(),
+    markdown({ extensions: [GFM] }),
     syntaxHighlighting(markdownHighlight),
     editorTheme,
     submitKeymap,
