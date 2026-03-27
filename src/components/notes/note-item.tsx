@@ -85,7 +85,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
       <ContextMenu>
         <ContextMenuTrigger
           className={cn(
-            "group flex items-start rounded-lg px-4 hover:bg-popover relative w-full",
+            "group flex items-start rounded-lg px-4 hover:bg-popover relative w-full select-text",
             isGroupStart ? "mt-3 pt-1 pb-1" : "py-0.5",
           )}
         >
@@ -147,26 +147,125 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
               </div>
             ) : (
               <>
-                <Markdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    a: ({ href, children }) => (
-                      <a
-                        href={href}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (href)
-                            window.ipcRenderer.invoke("open-external", href);
-                        }}
-                        className="text-primary underline underline-offset-2 hover:opacity-80 cursor-pointer"
-                      >
-                        {children}
-                      </a>
-                    ),
-                  }}
-                >
-                  {note.content}
-                </Markdown>
+                <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-foreground prose-li:text-foreground prose-code:text-foreground prose-blockquote:text-muted-foreground prose-lead:text-foreground">
+                  <Markdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      a: ({ href, children }) => (
+                        <a
+                          href={href}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (href)
+                              window.ipcRenderer.invoke("open-external", href);
+                          }}
+                          className="text-primary underline underline-offset-2 hover:opacity-80 cursor-pointer"
+                        >
+                          {children}
+                        </a>
+                      ),
+                      h1: ({ children }) => (
+                        <h1 className="text-2xl font-bold mb-1 pb-1">
+                          {children}
+                        </h1>
+                      ),
+                      h2: ({ children }) => (
+                        <h2 className="text-xl font-semibold mb-1 pb-1">
+                          {children}
+                        </h2>
+                      ),
+                      h3: ({ children }) => (
+                        <h3 className="text-lg font-semibold mb-1">
+                          {children}
+                        </h3>
+                      ),
+                      h4: ({ children }) => (
+                        <h4 className="text-base font-semibold mb-0.5">
+                          {children}
+                        </h4>
+                      ),
+                      h5: ({ children }) => (
+                        <h5 className="text-sm font-semibold mt-2 mb-0.5">
+                          {children}
+                        </h5>
+                      ),
+                      h6: ({ children }) => (
+                        <h6 className="text-xs font-semibold mt-2 mb-0.5 text-muted-foreground">
+                          {children}
+                        </h6>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="list-disc list-outside pl-5 space-y-0.5 mt-0">
+                          {children}
+                        </ul>
+                      ),
+                      ol: ({ children }) => (
+                        <ol className="list-decimal list-outside pl-5 space-y-0.5">
+                          {children}
+                        </ol>
+                      ),
+                      li: ({ children }) => (
+                        <li className="text-sm leading-snug pl-0">
+                          {children}
+                        </li>
+                      ),
+                      blockquote: ({ children }) => (
+                        <blockquote className="border-l-4 border-primary/40 pl-3 my-1 text-muted-foreground italic">
+                          {children}
+                        </blockquote>
+                      ),
+                      code: ({ children, className }) => {
+                        const isBlock = className?.includes("language-");
+                        return isBlock ? (
+                          <code className={className}>{children}</code>
+                        ) : (
+                          <code className="bg-muted text-foreground rounded px-1 py-0.5 text-xs font-mono">
+                            {children}
+                          </code>
+                        );
+                      },
+                      pre: ({ children }) => (
+                        <pre className="bg-muted rounded-md px-3 py-2 my-1 overflow-x-auto text-xs font-mono">
+                          {children}
+                        </pre>
+                      ),
+                      hr: () => <hr className="border-border my-3!" />,
+                      strong: ({ children }) => (
+                        <strong className="font-semibold">{children}</strong>
+                      ),
+                      em: ({ children }) => (
+                        <em className="italic">{children}</em>
+                      ),
+                      table: ({ children }) => (
+                        <div className="overflow-x-auto my-2">
+                          <table className="w-full text-sm border-collapse">
+                            {children}
+                          </table>
+                        </div>
+                      ),
+                      thead: ({ children }) => (
+                        <thead className="border-b border-border">
+                          {children}
+                        </thead>
+                      ),
+                      th: ({ children }) => (
+                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">
+                          {children}
+                        </th>
+                      ),
+                      td: ({ children }) => (
+                        <td className="px-3 py-1.5 border-b border-border/50 text-foreground">
+                          {children}
+                        </td>
+                      ),
+                      p: ({ children }) => (
+                        <p className="mb-0 mt-0 text-sm">{children}</p>
+                      ),
+                    }}
+                  >
+                    {note.content}
+                  </Markdown>
+                </div>
                 {note.resolvedAttachments &&
                   note.resolvedAttachments.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
