@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { Button } from "../ui/button";
-import { Edit2, StickyNote, Trash2 } from "lucide-react";
+import { Copy, Edit2, StickyNote, Trash2 } from "lucide-react";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
 import { ConfirmationDialog } from "../ui/confirmation-dialog";
 import { MarkdownEditor } from "./markdown-editor";
@@ -42,6 +42,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(note.content);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [contextMenuImage, setContextMenuImage] = useState<string | null>(null);
   const { notesDirectory, activeFolder, updateNote, removeNote } =
     useAppStore();
 
@@ -80,9 +81,21 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
     }
   };
 
+  const handleCopyImage = async () => {
+    if (!contextMenuImage) return;
+    const res = await fetch(contextMenuImage);
+    const blob = await res.blob();
+    await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+    setContextMenuImage(null);
+  };
+
   return (
     <>
-      <ContextMenu>
+      <ContextMenu
+        onOpenChange={(open) => {
+          if (!open) setContextMenuImage(null);
+        }}
+      >
         <ContextMenuTrigger
           className={cn(
             "group flex items-start rounded-lg px-4 hover:bg-popover relative w-full select-text",
@@ -159,7 +172,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                             if (href)
                               window.ipcRenderer.invoke("open-external", href);
                           }}
-                          className="text-primary underline underline-offset-2 hover:opacity-80 cursor-pointer"
+                          className="text-primary underline underline-offset-2 hover:opacity-80 cursor-pointer break-words"
                         >
                           {children}
                         </a>
@@ -276,6 +289,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                               src={dataUrl}
                               alt={fileName}
                               className="max-h-48 rounded-md object-cover"
+                              onContextMenu={() => setContextMenuImage(dataUrl)}
                             />
                           </DialogTrigger>
                           <DialogContent
@@ -299,6 +313,15 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
 
         {!isEditing && (
           <ContextMenuContent>
+            {contextMenuImage && (
+              <>
+                <ContextMenuItem onClick={handleCopyImage}>
+                  <Copy />
+                  Copy Image
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+              </>
+            )}
             <ContextMenuItem onClick={handleEdit}>
               <Edit2 />
               Edit

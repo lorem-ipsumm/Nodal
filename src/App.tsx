@@ -9,7 +9,7 @@ function App() {
   return (
     <div className="bg-background h-screen flex w-screen">
       <Sidebar />
-      <section className="w-full flex flex-col">
+      <section className="w-full min-w-0 flex flex-col">
         <Navbar />
         <NotesContainer />
         <NotesInput />

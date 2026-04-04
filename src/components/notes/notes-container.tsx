@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Note } from "@/lib/types";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
 import { NoteItem } from "./note-item";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const SCROLL_THRESHOLD = 100;
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
@@ -13,9 +14,29 @@ const isGroupStart = (notes: Note[], index: number): boolean => {
   return curr.timestamp - prev.timestamp > GROUP_WINDOW_MS;
 };
 
+const NoteSkeletons = () => (
+  <>
+    {[80, 48, 32, 56, 96].map((width, i) => (
+      <div key={i} className="flex items-start px-4 mt-3 pt-1 pb-1">
+        <div className="w-10 flex-shrink-0 mr-3 flex items-start justify-center">
+          <Skeleton className="w-9 h-9 rounded-full" />
+        </div>
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-baseline gap-2">
+            <Skeleton className="h-3.5 w-8" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+          <Skeleton className="h-4" style={{ width: `${width}%` }} />
+        </div>
+      </div>
+    ))}
+  </>
+);
+
 export const NotesContainer = () => {
   const { notesDirectory, activeFolder, notes, setNotes } = useAppStore();
   const scrollRef = useRef<HTMLElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isNearBottom = () => {
     const el = scrollRef.current;
@@ -36,6 +57,7 @@ export const NotesContainer = () => {
     }
 
     const folderPath = `${notesDirectory}/${activeFolder}`;
+    setIsLoading(true);
     window.ipcRenderer
       .invoke("get-notes", folderPath)
       .then(async (result: Note[]) => {
@@ -52,6 +74,7 @@ export const NotesContainer = () => {
           }),
         );
         setNotes(resolved);
+        setIsLoading(false);
         requestAnimationFrame(scrollToBottom);
       });
   }, [notesDirectory, activeFolder, setNotes]);
@@ -63,15 +86,19 @@ export const NotesContainer = () => {
   return (
     <section
       ref={scrollRef}
-      className="flex-1 px-3 py-2 overflow-y-auto flex flex-col"
+      className="flex-1 px-3 py-2 overflow-y-auto flex flex-col overflow-x-hidden"
     >
-      {notes.map((note, index) => (
-        <NoteItem
-          key={note.folderName}
-          note={note}
-          isGroupStart={isGroupStart(notes, index)}
-        />
-      ))}
+      {isLoading ? (
+        <NoteSkeletons />
+      ) : (
+        notes.map((note, index) => (
+          <NoteItem
+            key={note.folderName}
+            note={note}
+            isGroupStart={isGroupStart(notes, index)}
+          />
+        ))
+      )}
     </section>
   );
 };

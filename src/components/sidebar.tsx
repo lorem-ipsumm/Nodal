@@ -96,7 +96,7 @@ export const Sidebar = () => {
         {!collapsed && (
           <>
             <NotebookPenIcon size={20} className="shrink-0" />
-            <span className="flex-1 truncate">Notecord</span>
+            <span className="flex-1 truncate">Nodal</span>
           </>
         )}
         <Button
@@ -192,7 +192,7 @@ export const Sidebar = () => {
         />
       </Dialog>
 
-      <section className="flex justify-center px-3 py-3 border-t shrink-0 w-full">
+      <section className="flex justify-center px-2 border-t shrink-0 w-full h-12 items-center">
         <Button
           variant="ghost"
           size={"icon"}
