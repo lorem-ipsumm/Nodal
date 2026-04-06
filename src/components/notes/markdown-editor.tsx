@@ -1,5 +1,5 @@
 import CodeMirror, { ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import { useEffect, useRef } from "react";
+import { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
 import { markdown } from "@codemirror/lang-markdown";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
@@ -65,6 +65,11 @@ const editorTheme = EditorView.theme({
   },
 });
 
+export interface MarkdownEditorHandle {
+  wrapSelection: (before: string, after: string) => void;
+  insertLinePrefix: (prefix: string) => void;
+}
+
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
@@ -75,61 +80,100 @@ interface MarkdownEditorProps {
   autoFocus?: boolean;
 }
 
-export const MarkdownEditor = ({
-  value,
-  onChange,
-  onSubmit,
-  onCancel,
-  placeholder,
-  className,
-  autoFocus,
-}: MarkdownEditorProps) => {
-  const editorRef = useRef<ReactCodeMirrorRef>(null);
+export const MarkdownEditor = forwardRef<
+  MarkdownEditorHandle,
+  MarkdownEditorProps
+>(
+  (
+    { value, onChange, onSubmit, onCancel, placeholder, className, autoFocus },
+    ref,
+  ) => {
+    const editorRef = useRef<ReactCodeMirrorRef>(null);
 
-  useEffect(() => {
-    if (autoFocus) {
-      editorRef.current?.view?.focus();
-    }
-  }, [autoFocus]);
-  const submitKeymap = Prec.highest(
-    keymap.of([
-      {
-        key: "Enter",
-        run: () => {
-          onSubmit();
-          return true;
-        },
+    useImperativeHandle(ref, () => ({
+      wrapSelection(before: string, after: string) {
+        const view = editorRef.current?.view;
+        if (!view) return;
+        const { state } = view;
+        const { from, to } = state.selection.main;
+        const selectedText = state.sliceDoc(from, to);
+        if (from === to) {
+          view.dispatch({
+            changes: { from, to, insert: before + after },
+            selection: { anchor: from + before.length },
+          });
+        } else {
+          view.dispatch({
+            changes: { from, to, insert: before + selectedText + after },
+            selection: {
+              anchor: from + before.length,
+              head: from + before.length + selectedText.length,
+            },
+          });
+        }
+        view.focus();
       },
-      {
-        key: "Escape",
-        run: () => {
-          if (onCancel) {
-            onCancel();
+      insertLinePrefix(prefix: string) {
+        const view = editorRef.current?.view;
+        if (!view) return;
+        const { state } = view;
+        const { from } = state.selection.main;
+        const line = state.doc.lineAt(from);
+        view.dispatch({
+          changes: { from: line.from, insert: prefix },
+          selection: { anchor: from + prefix.length },
+        });
+        view.focus();
+      },
+    }));
+
+    useEffect(() => {
+      if (autoFocus) {
+        editorRef.current?.view?.focus();
+      }
+    }, [autoFocus]);
+    const submitKeymap = Prec.highest(
+      keymap.of([
+        {
+          key: "Enter",
+          run: () => {
+            onSubmit();
             return true;
-          }
-          return false;
+          },
         },
-      },
-    ]),
-  );
+        {
+          key: "Escape",
+          run: () => {
+            if (onCancel) {
+              onCancel();
+              return true;
+            }
+            return false;
+          },
+        },
+      ]),
+    );
 
-  const extensions = [
-    markdown({ extensions: [GFM] }),
-    syntaxHighlighting(markdownHighlight),
-    editorTheme,
-    submitKeymap,
-    EditorView.lineWrapping,
-  ];
+    const extensions = [
+      markdown({ extensions: [GFM] }),
+      syntaxHighlighting(markdownHighlight),
+      editorTheme,
+      submitKeymap,
+      EditorView.lineWrapping,
+    ];
 
-  return (
-    <CodeMirror
-      ref={editorRef}
-      value={value}
-      onChange={onChange}
-      extensions={extensions}
-      basicSetup={false}
-      placeholder={placeholder}
-      className={className}
-    />
-  );
-};
+    return (
+      <CodeMirror
+        ref={editorRef}
+        value={value}
+        onChange={onChange}
+        extensions={extensions}
+        basicSetup={false}
+        placeholder={placeholder}
+        className={className}
+      />
+    );
+  },
+);
+
+MarkdownEditor.displayName = "MarkdownEditor";

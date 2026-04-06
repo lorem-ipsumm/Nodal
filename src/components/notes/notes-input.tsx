@@ -1,13 +1,16 @@
-import { useState } from "react";
-import { Bold, Code, ImageIcon, Italic, List, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { Bold, Code, Italic, List, Paperclip, X, File } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
-import { MarkdownEditor } from "./markdown-editor";
+import { MarkdownEditor, MarkdownEditorHandle } from "./markdown-editor";
+
+const isImageDataUrl = (dataUrl: string) => dataUrl.startsWith("data:image/");
 
 export const NotesInput = () => {
   const { notesDirectory, activeFolder, addNote } = useAppStore();
+  const editorRef = useRef<MarkdownEditorHandle>(null);
   const [content, setContent] = useState("");
-  const [pendingImages, setPendingImages] = useState<
+  const [pendingFiles, setPendingFiles] = useState<
     { filePath: string; dataUrl: string }[]
   >([]);
 
@@ -19,16 +22,18 @@ export const NotesInput = () => {
     const timestamp = parseInt(folderName, 10);
     const notePath = `${folderPath}/${folderName}`;
 
-    const imagesToAttach = pendingImages.map((img) => img.filePath);
-    if (content.length === 0 && imagesToAttach.length === 0) return;
+    const filesToAttach = pendingFiles.map((f) => f.filePath);
+    if (content.length === 0 && filesToAttach.length === 0) return;
+
     setContent("");
-    setPendingImages([]);
+    setPendingFiles([]);
+
     addNote({
       folderName,
-      content: content,
+      content,
       timestamp,
-      attachments: imagesToAttach.map((p) => p.split("/").pop()!),
-      resolvedAttachments: pendingImages.map(({ filePath, dataUrl }) => ({
+      attachments: filesToAttach.map((p) => p.split("/").pop()!),
+      resolvedAttachments: pendingFiles.map(({ filePath, dataUrl }) => ({
         fileName: filePath.split("/").pop()!,
         dataUrl,
       })),
@@ -41,25 +46,25 @@ export const NotesInput = () => {
       content,
     );
 
-    if (imagesToAttach.length > 0) {
+    if (filesToAttach.length > 0) {
       await window.ipcRenderer.invoke(
         "copy-attachments",
         notePath,
-        imagesToAttach,
+        filesToAttach,
       );
     }
   };
 
-  const handleSelectImages = async () => {
+  const handleSelectFiles = async () => {
     const selected: { filePath: string; dataUrl: string }[] =
-      await window.ipcRenderer.invoke("select-images");
+      await window.ipcRenderer.invoke("select-files");
     if (selected.length > 0) {
-      setPendingImages((prev) => [...prev, ...selected]);
+      setPendingFiles((prev) => [...prev, ...selected]);
     }
   };
 
-  const removePendingImage = (filePath: string) => {
-    setPendingImages((prev) => prev.filter((p) => p.filePath !== filePath));
+  const removePendingFile = (filePath: string) => {
+    setPendingFiles((prev) => prev.filter((f) => f.filePath !== filePath));
   };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
@@ -82,12 +87,12 @@ export const NotesInput = () => {
       const fileName = `paste-${Date.now()}.${ext}`;
 
       const tempPath: string = await window.ipcRenderer.invoke(
-        "write-temp-image",
+        "write-temp-file",
         dataUrl,
         fileName,
       );
 
-      setPendingImages((prev) => [...prev, { filePath: tempPath, dataUrl }]);
+      setPendingFiles((prev) => [...prev, { filePath: tempPath, dataUrl }]);
     }
   };
 
@@ -97,44 +102,74 @@ export const NotesInput = () => {
         className="bg-popover rounded-lg h-full w-full flex flex-col border"
         onPaste={handlePaste}
       >
-        {pendingImages.length > 0 && (
+        {pendingFiles.length > 0 && (
           <section className="flex flex-wrap gap-2 p-3 border-b">
-            {pendingImages.map(({ filePath, dataUrl }) => (
-              <div key={filePath} className="relative group/img w-16 h-16">
-                <img
-                  src={dataUrl}
-                  alt={filePath.split("/").pop()}
-                  className="w-full h-full object-cover rounded-md"
-                />
-                <button
-                  onClick={() => removePendingImage(filePath)}
-                  className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"
+            {pendingFiles.map(({ filePath, dataUrl }) => {
+              const fileName = filePath.split("/").pop()!;
+              return isImageDataUrl(dataUrl) ? (
+                <div key={filePath} className="relative group/img w-16 h-16">
+                  <img
+                    src={dataUrl}
+                    alt={fileName}
+                    className="w-full h-full object-cover rounded-md"
+                  />
+                  <button
+                    onClick={() => removePendingFile(filePath)}
+                    className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  key={filePath}
+                  className="relative group/file flex items-center gap-2 pl-2 pr-7 py-1.5 rounded-md bg-muted text-sm max-w-48"
                 >
-                  <X size={10} />
-                </button>
-              </div>
-            ))}
+                  <File size={14} className="shrink-0 text-muted-foreground" />
+                  <span className="truncate text-xs">{fileName}</span>
+                  <button
+                    onClick={() => removePendingFile(filePath)}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover/file:opacity-100 transition-opacity"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              );
+            })}
           </section>
         )}
         <section className="border-b">
-          <Button variant={"ghost"}>
+          <Button
+            variant={"ghost"}
+            onClick={() => editorRef.current?.wrapSelection("**", "**")}
+          >
             <Bold />
           </Button>
-          <Button variant={"ghost"}>
+          <Button
+            variant={"ghost"}
+            onClick={() => editorRef.current?.wrapSelection("*", "*")}
+          >
             <Italic />
           </Button>
-          <Button variant={"ghost"}>
+          <Button
+            variant={"ghost"}
+            onClick={() => editorRef.current?.wrapSelection("`", "`")}
+          >
             <Code />
           </Button>
-          <Button variant={"ghost"}>
+          <Button
+            variant={"ghost"}
+            onClick={() => editorRef.current?.insertLinePrefix("- ")}
+          >
             <List />
           </Button>
-          <Button variant={"ghost"} onClick={handleSelectImages}>
-            <ImageIcon />
+          <Button variant={"ghost"} onClick={handleSelectFiles}>
+            <Paperclip />
           </Button>
         </section>
         <section className="flex">
           <MarkdownEditor
+            ref={editorRef}
             value={content}
             onChange={setContent}
             onSubmit={createNote}

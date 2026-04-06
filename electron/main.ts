@@ -1,4 +1,56 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
+
+const getMimeType = (ext: string): string => {
+  const mimeTypes: Record<string, string> = {
+    // Images
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    gif: "image/gif",
+    webp: "image/webp",
+    svg: "image/svg+xml",
+    ico: "image/x-icon",
+    bmp: "image/bmp",
+    tiff: "image/tiff",
+    // Documents
+    pdf: "application/pdf",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xls: "application/vnd.ms-excel",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ppt: "application/vnd.ms-powerpoint",
+    pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    // Text / Code
+    txt: "text/plain",
+    md: "text/markdown",
+    csv: "text/csv",
+    json: "application/json",
+    xml: "application/xml",
+    js: "text/javascript",
+    ts: "text/typescript",
+    html: "text/html",
+    css: "text/css",
+    py: "text/x-python",
+    rs: "text/x-rust",
+    // Audio
+    mp3: "audio/mpeg",
+    wav: "audio/wav",
+    ogg: "audio/ogg",
+    flac: "audio/flac",
+    // Video
+    mp4: "video/mp4",
+    webm: "video/webm",
+    mov: "video/quicktime",
+    mkv: "video/x-matroska",
+    // Archives
+    zip: "application/zip",
+    tar: "application/x-tar",
+    gz: "application/gzip",
+    rar: "application/x-rar-compressed",
+    "7z": "application/x-7z-compressed",
+  };
+  return mimeTypes[ext] ?? "application/octet-stream";
+};
 import fs from "node:fs";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
@@ -112,19 +164,16 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle("select-images", async () => {
+ipcMain.handle("select-files", async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     properties: ["openFile", "multiSelections"],
-    filters: [
-      { name: "Images", extensions: ["jpg", "jpeg", "png", "gif", "webp"] },
-    ],
   });
   if (canceled) return [];
   return filePaths.map((filePath) => {
     const data = fs.readFileSync(filePath);
     const ext = path.extname(filePath).slice(1).toLowerCase();
-    const mime = ext === "jpg" ? "jpeg" : ext;
-    const dataUrl = `data:image/${mime};base64,${data.toString("base64")}`;
+    const mime = getMimeType(ext);
+    const dataUrl = `data:${mime};base64,${data.toString("base64")}`;
     return { filePath, dataUrl };
   });
 });
@@ -136,23 +185,31 @@ ipcMain.handle(
       const filePath = path.join(notePath, fileName);
       const data = fs.readFileSync(filePath);
       const ext = path.extname(fileName).slice(1).toLowerCase();
-      const mime = ext === "jpg" ? "jpeg" : ext;
-      const dataUrl = `data:image/${mime};base64,${data.toString("base64")}`;
+      const mime = getMimeType(ext);
+      const dataUrl = `data:${mime};base64,${data.toString("base64")}`;
       return { fileName, dataUrl };
     });
   },
 );
 
 ipcMain.handle(
-  "write-temp-image",
+  "write-temp-file",
   (_event, dataUrl: string, fileName: string) => {
-    const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+    const base64Data = dataUrl.replace(/^data:[^;]+;base64,/, "");
     const buffer = Buffer.from(base64Data, "base64");
     const tempPath = path.join(os.tmpdir(), fileName);
     fs.writeFileSync(tempPath, buffer);
     return tempPath;
   },
 );
+
+ipcMain.handle("open-file", (_event, dataUrl: string, fileName: string) => {
+  const base64Data = dataUrl.replace(/^data:[^;]+;base64,/, "");
+  const buffer = Buffer.from(base64Data, "base64");
+  const tempPath = path.join(os.tmpdir(), fileName);
+  fs.writeFileSync(tempPath, buffer);
+  shell.openPath(tempPath);
+});
 
 ipcMain.handle(
   "copy-attachments",

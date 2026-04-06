@@ -6,7 +6,17 @@ import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { Button } from "../ui/button";
-import { Copy, Edit2, StickyNote, Trash2 } from "lucide-react";
+import {
+  Copy,
+  Edit2,
+  File,
+  FileAudio,
+  FileCode,
+  FileText,
+  FileVideo,
+  StickyNote,
+  Trash2,
+} from "lucide-react";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
 import { ConfirmationDialog } from "../ui/confirmation-dialog";
 import { MarkdownEditor } from "./markdown-editor";
@@ -282,28 +292,50 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                 {note.resolvedAttachments &&
                   note.resolvedAttachments.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {note.resolvedAttachments.map(({ fileName, dataUrl }) => (
-                        <Dialog key={fileName}>
-                          <DialogTrigger className="cursor-zoom-in">
-                            <img
-                              src={dataUrl}
-                              alt={fileName}
-                              className="max-h-48 rounded-md object-cover"
-                              onContextMenu={() => setContextMenuImage(dataUrl)}
-                            />
-                          </DialogTrigger>
-                          <DialogContent
-                            className="sm:max-w-[50vw] max-h-[90vh] flex items-center justify-center bg-transparent ring-0"
-                            showCloseButton
+                      {note.resolvedAttachments.map(({ fileName, dataUrl }) =>
+                        dataUrl.startsWith("data:image/") ? (
+                          <Dialog key={fileName}>
+                            <DialogTrigger className="cursor-zoom-in">
+                              <img
+                                src={dataUrl}
+                                alt={fileName}
+                                className="max-h-48 rounded-md object-cover"
+                                onContextMenu={() =>
+                                  setContextMenuImage(dataUrl)
+                                }
+                              />
+                            </DialogTrigger>
+                            <DialogContent
+                              className="sm:max-w-[50vw] max-h-[90vh] flex items-center justify-center bg-transparent ring-0"
+                              showCloseButton
+                            >
+                              <img
+                                src={dataUrl}
+                                alt={fileName}
+                                className="max-w-full max-h-[calc(90vh-2rem)] object-contain rounded-md"
+                              />
+                            </DialogContent>
+                          </Dialog>
+                        ) : (
+                          <button
+                            key={fileName}
+                            onClick={() =>
+                              window.ipcRenderer.invoke(
+                                "open-file",
+                                dataUrl,
+                                fileName,
+                              )
+                            }
+                            className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted hover:bg-muted/70 transition-colors text-sm max-w-56 cursor-pointer"
                           >
-                            <img
-                              src={dataUrl}
-                              alt={fileName}
-                              className="max-w-full max-h-[calc(90vh-2rem)] object-contain rounded-md"
+                            <FileAttachmentIcon
+                              dataUrl={dataUrl}
+                              className="size-4 shrink-0 text-muted-foreground"
                             />
-                          </DialogContent>
-                        </Dialog>
-                      ))}
+                            <span className="truncate">{fileName}</span>
+                          </button>
+                        ),
+                      )}
                     </div>
                   )}
               </>
@@ -394,4 +426,29 @@ const NoteActions = ({
       />
     </div>
   );
+};
+
+const FileAttachmentIcon = ({
+  dataUrl,
+  className,
+}: {
+  dataUrl: string;
+  className?: string;
+}) => {
+  const mime = dataUrl.split(";")[0].replace("data:", "");
+  if (mime.startsWith("video/")) return <FileVideo className={className} />;
+  if (mime.startsWith("audio/")) return <FileAudio className={className} />;
+  if (
+    mime.startsWith("text/") ||
+    mime === "application/json" ||
+    mime === "application/xml"
+  )
+    return <FileCode className={className} />;
+  if (
+    mime === "application/pdf" ||
+    mime.includes("word") ||
+    mime.includes("document")
+  )
+    return <FileText className={className} />;
+  return <File className={className} />;
 };
