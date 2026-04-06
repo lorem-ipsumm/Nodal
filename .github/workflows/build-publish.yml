@@ -1,34 +1,42 @@
-name: Build and Publish to Public Release Repo
+name: Build and Release
 
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
+
+permissions:
+  contents: write
 
 jobs:
-  build:
-    runs-on: windows-latest
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            args: --win
+          - os: macos-latest
+            args: --mac
+          - os: ubuntu-latest
+            args: --linux
 
-    env:
-      GH_TAG: ${{ github.ref_name }}
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Build application
-        run: npm run build:ci
+        run: bun run build:ci
 
-      - name: Build and publish with electron-builder
+      - name: Package and publish
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PUSH_TOKEN }}
-        run: |
-          npx electron-builder --win --publish always
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bunx electron-builder ${{ matrix.args }} --publish always

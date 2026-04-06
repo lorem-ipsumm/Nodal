@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "com.yourcompany.yourapp",
+  "appId": "com.nodal.app",
   "asar": true,
   "productName": "Nodal",
   "directories": {
@@ -9,7 +9,7 @@
   "files": ["dist", "dist-electron"],
   "mac": {
     "target": ["dmg"],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    "artifactName": "${productName}-Mac-${version}.${ext}"
   },
   "win": {
     "target": [
@@ -20,6 +20,11 @@
     ],
     "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
   },
+  "linux": {
+    "target": ["AppImage", "deb"],
+    "artifactName": "${productName}-Linux-${version}.${ext}",
+    "category": "Utility"
+  },
   "nsis": {
     "oneClick": false,
     "perMachine": false,
@@ -28,8 +33,8 @@
   },
   "publish": {
     "provider": "github",
-    "owner": "yourusername",
-    "repo": "your-repo-name",
+    "owner": "lorem-ipsumm",
+    "repo": "Nodal",
     "releaseType": "release"
   }
 }
