@@ -3,6 +3,7 @@ import { Folder, Search, FolderPlus } from "lucide-react";
 import { Dialog, DialogContent } from "./ui/dialog";
 import { cn } from "@/lib/utils";
 import { CreateFolderDialog } from "./create-folder-dialog";
+import { FolderContextMenu } from "./folder-context-menu";
 
 interface FolderSelectDialogProps {
   open: boolean;
@@ -10,6 +11,8 @@ interface FolderSelectDialogProps {
   notesDirectory: string | undefined;
   activeFolder: string | undefined;
   onSelect: (folder: string) => void;
+  onFolderRenamed?: (oldName: string, newName: string) => void;
+  onFolderDeleted?: (folderName: string) => void;
 }
 
 export const FolderSelectDialog = ({
@@ -18,6 +21,8 @@ export const FolderSelectDialog = ({
   notesDirectory,
   activeFolder,
   onSelect,
+  onFolderRenamed,
+  onFolderDeleted,
 }: FolderSelectDialogProps) => {
   const [folders, setFolders] = useState<string[]>([]);
   const [search, setSearch] = useState("");
@@ -76,21 +81,35 @@ export const FolderSelectDialog = ({
               </p>
             ) : (
               filtered.map((folder) => (
-                <button
+                <FolderContextMenu
                   key={folder}
-                  onClick={(e) => handleSelect(folder, e)}
-                  className={cn(
-                    "w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors hover:bg-accent",
-                    folder === activeFolder &&
-                      "bg-accent text-accent-foreground font-medium",
-                  )}
+                  folder={folder}
+                  onRenamed={(oldName, newName) => {
+                    setFolders((prev) =>
+                      prev.map((f) => (f === oldName ? newName : f)),
+                    );
+                    onFolderRenamed?.(oldName, newName);
+                  }}
+                  onDeleted={(name) => {
+                    setFolders((prev) => prev.filter((f) => f !== name));
+                    onFolderDeleted?.(name);
+                  }}
                 >
-                  <Folder
-                    size={15}
-                    className="flex-shrink-0 text-muted-foreground"
-                  />
-                  {folder}
-                </button>
+                  <button
+                    onClick={(e) => handleSelect(folder, e)}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors hover:bg-accent",
+                      folder === activeFolder &&
+                        "bg-accent text-accent-foreground font-medium",
+                    )}
+                  >
+                    <Folder
+                      size={15}
+                      className="flex-shrink-0 text-muted-foreground"
+                    />
+                    {folder}
+                  </button>
+                </FolderContextMenu>
               ))
             )}
           </div>

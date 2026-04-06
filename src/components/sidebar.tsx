@@ -10,20 +10,16 @@ import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   SunIcon,
-  Trash2,
 } from "lucide-react";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
-import { Dialog } from "./ui/dialog";
-import { ConfirmationDialog } from "./ui/confirmation-dialog";
 import { CreateFolderDialog } from "./create-folder-dialog";
+import { FolderContextMenu } from "./folder-context-menu";
 
 export const Sidebar = () => {
   const [folders, setFolders] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [folderToDelete, setFolderToDelete] = useState<string | undefined>();
   const [createOpen, setCreateOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const { notesDirectory, setNotesDirectory, activeFolder, setActiveFolder } =
@@ -47,22 +43,6 @@ export const Sidebar = () => {
         }
       });
   }, [setNotesDirectory]);
-
-  const handleDeleteFolder = (folder: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFolderToDelete(folder);
-    setConfirmOpen(true);
-  };
-
-  const confirmDeleteFolder = () => {
-    if (!folderToDelete || !notesDirectory) return;
-    const folderPath = `${notesDirectory}/${folderToDelete}`;
-    window.ipcRenderer.invoke("delete-folder", folderPath).then(() => {
-      setFolders((prev) => prev.filter((f) => f !== folderToDelete));
-      if (activeFolder === folderToDelete) setActiveFolder(undefined);
-      setFolderToDelete(undefined);
-    });
-  };
 
   const handleSelectWorkspace = () => {
     window.ipcRenderer
@@ -155,23 +135,27 @@ export const Sidebar = () => {
 
             <div className="mt-1 flex flex-col gap-1">
               {folders.map((folder) => (
-                <Button
+                <FolderContextMenu
                   key={folder}
-                  className="justify-start cursor-pointer group relative"
-                  variant={activeFolder === folder ? "default" : "ghost"}
-                  onClick={() => setActiveFolder(folder)}
+                  folder={folder}
+                  onRenamed={(oldName, newName) =>
+                    setFolders((prev) =>
+                      prev.map((f) => (f === oldName ? newName : f)),
+                    )
+                  }
+                  onDeleted={(name) =>
+                    setFolders((prev) => prev.filter((f) => f !== name))
+                  }
                 >
-                  <FolderIcon size={14} className="shrink-0" />
-                  <span className="truncate">{folder}</span>
-                  <div
-                    className={cn(
-                      "hidden group-hover:block absolute right-2 hover:text-destructive z-10",
-                    )}
-                    onClick={(e) => handleDeleteFolder(folder, e)}
+                  <Button
+                    className="justify-start cursor-pointer w-full"
+                    variant={activeFolder === folder ? "default" : "ghost"}
+                    onClick={() => setActiveFolder(folder)}
                   >
-                    <Trash2 />
-                  </div>
-                </Button>
+                    <FolderIcon size={14} className="shrink-0" />
+                    <span className="truncate">{folder}</span>
+                  </Button>
+                </FolderContextMenu>
               ))}
             </div>
           </div>
@@ -183,14 +167,6 @@ export const Sidebar = () => {
         onOpenChange={setCreateOpen}
         onCreated={(name) => setFolders((prev) => [...prev, name])}
       />
-
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <ConfirmationDialog
-          title="Delete folder"
-          description={`Are you sure you want to delete "${folderToDelete}" and all of its notes? This action cannot be undone.`}
-          action={confirmDeleteFolder}
-        />
-      </Dialog>
 
       <section className="flex justify-center px-2 border-t shrink-0 w-full h-12 items-center">
         <Button

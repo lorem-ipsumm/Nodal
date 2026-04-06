@@ -182,6 +182,10 @@ ipcMain.handle("create-folder", (_event, folderPath: string) => {
   fs.mkdirSync(folderPath, { recursive: true });
 });
 
+ipcMain.handle("rename-folder", (_event, oldPath: string, newPath: string) => {
+  fs.renameSync(oldPath, newPath);
+});
+
 ipcMain.handle("update-note", (_event, notePath: string, content: string) => {
   fs.writeFileSync(path.join(notePath, "note.md"), content, "utf-8");
 });
