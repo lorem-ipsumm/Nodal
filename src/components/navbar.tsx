@@ -35,9 +35,9 @@ export const Navbar = () => {
           )}
         </Button>
         <section className="flex items-center gap-3">
-          <Button variant={"outline"}>
+          {/*<Button variant={"outline"}>
             <Pin size={18} className="rotate-12" />
-          </Button>
+          </Button>*/}
           <Input placeholder={`Search ${activeFolder ?? ""}`} />
         </section>
       </section>
