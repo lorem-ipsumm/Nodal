@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
-import { Folder, ChevronDown, Pin } from "lucide-react";
+import { Folder, ChevronDown } from "lucide-react";
 import { Input } from "./ui/input";
 import { cn } from "@/lib/utils";
 import { FolderSelectDialog } from "./folder-select-dialog";
