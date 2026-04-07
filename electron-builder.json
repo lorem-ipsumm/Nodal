@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.nodal.app",
+  "icon": "src/assets/nodal.png",
   "asar": true,
   "productName": "Nodal",
   "directories": {

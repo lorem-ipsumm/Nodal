@@ -12,6 +12,8 @@ interface AppStore {
   addNote: (note: Note) => void;
   removeNote: (folderName: string) => void;
   updateNote: (folderName: string, content: string) => void;
+  navbarVisible: boolean;
+  toggleNavbar: () => void;
 }
 
 export const useAppStore = create<AppStore>()(
@@ -37,11 +39,15 @@ export const useAppStore = create<AppStore>()(
             n.folderName === folderName ? { ...n, content } : n,
           ),
         })),
+      navbarVisible: true,
+      toggleNavbar: () =>
+        set((state) => ({ navbarVisible: !state.navbarVisible })),
     }),
     {
       name: "app-storage",
       partialize: (state) => ({
         activeFolder: state.activeFolder,
+        navbarVisible: state.navbarVisible,
       }),
     },
   ),

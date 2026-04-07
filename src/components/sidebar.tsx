@@ -6,7 +6,6 @@ import {
   FolderOpenIcon,
   FolderPlusIcon,
   MoonIcon,
-  NotebookPenIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   SunIcon,
@@ -69,14 +68,25 @@ export const Sidebar = () => {
     >
       <section
         className={cn(
-          "h-12 flex items-center px-3 gap-2 border-b mb-5 shrink-0",
+          "h-12 flex items-center px-3 justify-between border-b mb-3 shrink-0",
           collapsed ? "justify-center" : "",
         )}
       >
         {!collapsed && (
           <>
-            <NotebookPenIcon size={20} className="shrink-0" />
-            <span className="flex-1 truncate">Nodal</span>
+            <Button
+              variant="ghost"
+              className="flex-1 truncate justify-start px-1 font-semibold -translate-x-1 flex gap-2"
+              onClick={handleSelectWorkspace}
+              title="Select notes directory"
+            >
+              <FolderOpenIcon size={20} className="shrink-0" />
+              <span className="truncate">
+                {notesDirectory
+                  ? notesDirectory.split(/[\\/]/).pop() || "Nodal"
+                  : "Nodal"}
+              </span>
+            </Button>
           </>
         )}
         <Button
@@ -111,28 +121,16 @@ export const Sidebar = () => {
           <div className="px-3">
             <div className="flex items-center justify-between mb-2">
               <Label>Folders</Label>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  title="New folder"
-                  onClick={() => setCreateOpen(true)}
-                >
-                  <FolderPlusIcon size={13} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  title="Change workspace"
-                  onClick={handleSelectWorkspace}
-                >
-                  <FolderOpenIcon size={13} />
-                </Button>
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                title="New folder"
+                onClick={() => setCreateOpen(true)}
+              >
+                <FolderPlusIcon size={13} />
+              </Button>
             </div>
-
             <div className="mt-1 flex flex-col gap-1">
               {folders.map((folder) => (
                 <FolderContextMenu

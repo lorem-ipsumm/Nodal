@@ -1,54 +1,65 @@
-import { useState } from "react";
+import { MinusIcon, SquareIcon, XIcon } from "lucide-react";
+import { Label } from "./ui/label";
+import Icon from "@/assets/nodal.png";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
-import { Folder, ChevronDown } from "lucide-react";
-import { Input } from "./ui/input";
-import { cn } from "@/lib/utils";
-import { FolderSelectDialog } from "./folder-select-dialog";
-import { Button } from "./ui/button";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from "./ui/context-menu";
 
 export const Navbar = () => {
-  const { activeFolder, notesDirectory, setActiveFolder } = useAppStore();
-  const [open, setOpen] = useState(false);
+  const { toggleNavbar } = useAppStore();
 
-  const handleSelect = (folder: string) => {
-    setActiveFolder(folder);
-    setOpen(false);
-  };
+  const handleMinimize = () => window.ipcRenderer.invoke("window-minimize");
+  const handleMaximize = () => window.ipcRenderer.invoke("window-maximize");
+  const handleClose = () => window.ipcRenderer.invoke("window-close");
 
   return (
-    <>
-      <section className="h-12 border-b flex items-center px-3 w-full justify-between">
-        <Button
-          onClick={() => notesDirectory && setOpen(true)}
-          disabled={!notesDirectory}
-          variant={"ghost"}
-          className={cn(
-            "flex gap-2 items-center rounded-md px-2 py-1 transition-colors",
-          )}
-        >
-          <Folder size={18} />
-          <span className="text-sm font-medium">
-            {activeFolder ?? "No folder selected"}
-          </span>
-          {notesDirectory && (
-            <ChevronDown size={14} className="text-muted-foreground" />
-          )}
-        </Button>
-        <section className="flex items-center gap-3">
-          {/*<Button variant={"outline"}>
-            <Pin size={18} className="rotate-12" />
-          </Button>*/}
-          <Input placeholder={`Search ${activeFolder ?? ""}`} />
+    <ContextMenu>
+      <ContextMenuTrigger
+        className="h-8 flex items-center select-none shrink-0 bg-sidebar border-b"
+        style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+      >
+        <section className="pl-2 flex items-center gap-2">
+          <img src={Icon} className="w-5.5 aspect-square" />
+          <Label>Nodal</Label>
         </section>
-      </section>
-
-      <FolderSelectDialog
-        open={open}
-        onOpenChange={setOpen}
-        notesDirectory={notesDirectory}
-        activeFolder={activeFolder}
-        onSelect={handleSelect}
-      />
-    </>
+        <div
+          className="ml-auto flex items-center"
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+        >
+          <button
+            onClick={handleMinimize}
+            className="h-8 w-12 flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            title="Minimize"
+          >
+            <MinusIcon size={12} />
+          </button>
+          <button
+            onClick={handleMaximize}
+            className="h-8 w-12 flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            title="Maximize"
+          >
+            <SquareIcon size={12} />
+          </button>
+          <button
+            onClick={handleClose}
+            className="h-8 w-12 flex items-center justify-center text-muted-foreground hover:bg-red-500 hover:text-white transition-colors"
+            title="Close"
+          >
+            <XIcon size={12} />
+          </button>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem onClick={toggleNavbar}>
+          Hide toolbar
+          <ContextMenuShortcut>Ctrl Shift B</ContextMenuShortcut>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 };

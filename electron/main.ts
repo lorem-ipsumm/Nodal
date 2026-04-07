@@ -88,7 +88,7 @@ let win: BrowserWindow | null;
 
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    icon: path.join(process.env.VITE_PUBLIC, "nodal.png"),
     frame: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
@@ -237,6 +237,22 @@ ipcMain.handle("delete-folder", (_event, folderPath: string) => {
 
 ipcMain.handle("create-folder", (_event, folderPath: string) => {
   fs.mkdirSync(folderPath, { recursive: true });
+});
+
+ipcMain.handle("window-minimize", () => {
+  win?.minimize();
+});
+
+ipcMain.handle("window-maximize", () => {
+  if (win?.isMaximized()) {
+    win.unmaximize();
+  } else {
+    win?.maximize();
+  }
+});
+
+ipcMain.handle("window-close", () => {
+  win?.close();
 });
 
 ipcMain.handle("rename-folder", (_event, oldPath: string, newPath: string) => {
