@@ -1,4 +1,5 @@
 import { ReactNode, useState } from "react";
+import { FolderSelectDialog } from "../folder-select-dialog";
 import { Note } from "@/lib/types";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import Markdown from "react-markdown";
@@ -14,6 +15,7 @@ import {
   FileCode,
   FileText,
   FileVideo,
+  FolderInput,
   StickyNote,
   Trash2,
 } from "lucide-react";
@@ -53,6 +55,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
   const [editContent, setEditContent] = useState(note.content);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [contextMenuImage, setContextMenuImage] = useState<string | null>(null);
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const { notesDirectory, activeFolder, updateNote, removeNote } =
     useAppStore();
 
@@ -89,6 +92,19 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
     } else {
       setConfirmOpen(true);
     }
+  };
+
+  const handleMoveNote = async (targetFolder: string) => {
+    if (!notesDirectory || !activeFolder) return;
+    const sourcePath = `${notesDirectory}/${activeFolder}/${note.folderName}`;
+    const destinationFolderPath = `${notesDirectory}/${targetFolder}`;
+    await window.ipcRenderer.invoke(
+      "move-note",
+      sourcePath,
+      destinationFolderPath,
+    );
+    removeNote(note.folderName);
+    setMoveDialogOpen(false);
   };
 
   const handleCopyImage = async () => {
@@ -358,6 +374,10 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
               <Edit2 />
               Edit
             </ContextMenuItem>
+            <ContextMenuItem onClick={() => setMoveDialogOpen(true)}>
+              <FolderInput />
+              Move to Folder
+            </ContextMenuItem>
             <ContextMenuSeparator />
             <ContextMenuItem
               variant="destructive"
@@ -377,6 +397,14 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
           action={deleteNote}
         />
       </Dialog>
+
+      <FolderSelectDialog
+        open={moveDialogOpen}
+        onOpenChange={setMoveDialogOpen}
+        notesDirectory={notesDirectory}
+        activeFolder={activeFolder}
+        onSelect={handleMoveNote}
+      />
     </>
   );
 };

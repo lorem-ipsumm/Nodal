@@ -231,6 +231,16 @@ ipcMain.handle("delete-note", (_event, notePath: string) => {
   fs.rmSync(notePath, { recursive: true, force: true });
 });
 
+ipcMain.handle(
+  "move-note",
+  (_event, sourcePath: string, destinationFolderPath: string) => {
+    const noteFolderName = path.basename(sourcePath);
+    const destNotePath = path.join(destinationFolderPath, noteFolderName);
+    fs.mkdirSync(destinationFolderPath, { recursive: true });
+    fs.renameSync(sourcePath, destNotePath);
+  },
+);
+
 ipcMain.handle("delete-folder", (_event, folderPath: string) => {
   fs.rmSync(folderPath, { recursive: true, force: true });
 });

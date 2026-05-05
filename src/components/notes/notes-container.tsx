@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Note } from "@/lib/types";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
 import { NoteItem } from "./note-item";
@@ -36,6 +36,7 @@ const NoteSkeletons = () => (
 export const NotesContainer = () => {
   const { notesDirectory, activeFolder, notes, setNotes } = useAppStore();
   const scrollRef = useRef<HTMLElement>(null);
+  const shouldScrollToBottom = useRef(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const isNearBottom = () => {
@@ -57,6 +58,7 @@ export const NotesContainer = () => {
     }
 
     const folderPath = `${notesDirectory}/${activeFolder}`;
+    shouldScrollToBottom.current = true;
     setIsLoading(true);
     window.ipcRenderer
       .invoke("get-notes", folderPath)
@@ -75,12 +77,16 @@ export const NotesContainer = () => {
         );
         setNotes(resolved);
         setIsLoading(false);
-        requestAnimationFrame(scrollToBottom);
       });
   }, [notesDirectory, activeFolder, setNotes]);
 
-  useEffect(() => {
-    if (isNearBottom()) scrollToBottom();
+  useLayoutEffect(() => {
+    if (shouldScrollToBottom.current) {
+      scrollToBottom();
+      shouldScrollToBottom.current = false;
+    } else if (isNearBottom()) {
+      scrollToBottom();
+    }
   }, [notes]);
 
   return (
