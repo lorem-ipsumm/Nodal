@@ -262,6 +262,14 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Hidden scrollbar utility */
+.scrollbar-hidden {
+    scrollbar-width: none;
+}
+.scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+}
+
 /* Custom scrollbar styling */
 ::-webkit-scrollbar {
     width: 6px;

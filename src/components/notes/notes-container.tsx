@@ -81,13 +81,14 @@ export const NotesContainer = () => {
   }, [notesDirectory, activeFolder, setNotes]);
 
   useLayoutEffect(() => {
+    if (isLoading) return;
     if (shouldScrollToBottom.current) {
       scrollToBottom();
       shouldScrollToBottom.current = false;
     } else if (isNearBottom()) {
       scrollToBottom();
     }
-  }, [notes]);
+  }, [notes, isLoading]);
 
   return (
     <section

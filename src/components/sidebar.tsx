@@ -118,7 +118,7 @@ export const Sidebar = () => {
             </Button>
           </div>
         ) : (
-          <div className="px-3">
+          <div className="h-full flex flex-col px-3">
             <div className="flex items-center justify-between mb-2">
               <Label>Folders</Label>
               <Button
@@ -131,7 +131,7 @@ export const Sidebar = () => {
                 <FolderPlusIcon size={13} />
               </Button>
             </div>
-            <div className="mt-1 flex flex-col gap-1">
+            <div className="mt-1 flex-1 overflow-y-auto flex flex-col gap-1 scrollbar-hidden">
               {folders.map((folder) => (
                 <FolderContextMenu
                   key={folder}

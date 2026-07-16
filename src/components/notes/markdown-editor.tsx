@@ -1,5 +1,11 @@
 import CodeMirror, { ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
+import {
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  forwardRef,
+} from "react";
 import { markdown } from "@codemirror/lang-markdown";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
@@ -89,6 +95,16 @@ export const MarkdownEditor = forwardRef<
     ref,
   ) => {
     const editorRef = useRef<ReactCodeMirrorRef>(null);
+    const onSubmitRef = useRef(onSubmit);
+    const onCancelRef = useRef(onCancel);
+
+    useEffect(() => {
+      onSubmitRef.current = onSubmit;
+    }, [onSubmit]);
+
+    useEffect(() => {
+      onCancelRef.current = onCancel;
+    }, [onCancel]);
 
     useImperativeHandle(ref, () => ({
       wrapSelection(before: string, after: string) {
@@ -132,35 +148,46 @@ export const MarkdownEditor = forwardRef<
         editorRef.current?.view?.focus();
       }
     }, [autoFocus]);
-    const submitKeymap = Prec.highest(
-      keymap.of([
-        {
-          key: "Enter",
-          run: () => {
-            onSubmit();
-            return true;
-          },
-        },
-        {
-          key: "Escape",
-          run: () => {
-            if (onCancel) {
-              onCancel();
-              return true;
-            }
-            return false;
-          },
-        },
-      ]),
+
+    const submitKeymap = useMemo(
+      () =>
+        Prec.highest(
+          keymap.of([
+            {
+              key: "Enter",
+              run: (view) => {
+                view.dispatch({
+                  changes: { from: 0, to: view.state.doc.length, insert: "" },
+                });
+                onSubmitRef.current();
+                return true;
+              },
+            },
+            {
+              key: "Escape",
+              run: () => {
+                if (onCancelRef.current) {
+                  onCancelRef.current();
+                  return true;
+                }
+                return false;
+              },
+            },
+          ]),
+        ),
+      [],
     );
 
-    const extensions = [
-      markdown({ extensions: [GFM] }),
-      syntaxHighlighting(markdownHighlight),
-      editorTheme,
-      submitKeymap,
-      EditorView.lineWrapping,
-    ];
+    const extensions = useMemo(
+      () => [
+        markdown({ extensions: [GFM] }),
+        syntaxHighlighting(markdownHighlight),
+        editorTheme,
+        submitKeymap,
+        EditorView.lineWrapping,
+      ],
+      [submitKeymap],
+    );
 
     return (
       <CodeMirror

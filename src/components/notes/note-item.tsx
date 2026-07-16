@@ -54,6 +54,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(note.content);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
   const [contextMenuImage, setContextMenuImage] = useState<string | null>(null);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const { notesDirectory, activeFolder, updateNote, removeNote } =
@@ -359,35 +360,30 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
           </div>
         </ContextMenuTrigger>
 
-        {!isEditing && (
-          <ContextMenuContent>
-            {contextMenuImage && (
-              <>
-                <ContextMenuItem onClick={handleCopyImage}>
-                  <Copy />
-                  Copy Image
-                </ContextMenuItem>
-                <ContextMenuSeparator />
-              </>
-            )}
-            <ContextMenuItem onClick={handleEdit}>
-              <Edit2 />
-              Edit
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => setMoveDialogOpen(true)}>
-              <FolderInput />
-              Move to Folder
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem
-              variant="destructive"
-              onClick={() => handleDelete()}
-            >
-              <Trash2 />
-              Delete
-            </ContextMenuItem>
-          </ContextMenuContent>
-        )}
+        <ContextMenuContent>
+          {contextMenuImage && (
+            <>
+              <ContextMenuItem onClick={handleCopyImage}>
+                <Copy />
+                Copy Image
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+            </>
+          )}
+          <ContextMenuItem onClick={handleEdit}>
+            <Edit2 />
+            Edit
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => setMoveDialogOpen(true)}>
+            <FolderInput />
+            Move to Folder
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem variant="destructive" onClick={() => handleDelete()}>
+            <Trash2 />
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
       </ContextMenu>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
