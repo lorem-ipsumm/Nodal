@@ -4,11 +4,28 @@ import * as React from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 
 import { cn } from "@/lib/utils";
+import { play } from "cuelume";
 import { Button } from "@/components/ui/button";
 import { RiCloseLine } from "@remixicon/react";
 
-function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />;
+function Dialog({ open, onOpenChange, ...props }: DialogPrimitive.Root.Props) {
+  const prevOpen = React.useRef(open);
+
+  React.useEffect(() => {
+    if (open === true && prevOpen.current !== true) {
+      play("whisper");
+    }
+    prevOpen.current = open;
+  }, [open]);
+
+  return (
+    <DialogPrimitive.Root
+      data-slot="dialog"
+      open={open}
+      onOpenChange={onOpenChange}
+      {...props}
+    />
+  );
 }
 
 function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
@@ -62,6 +79,7 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
+            data-cuelume-press="click"
             render={
               <Button
                 variant="ghost"

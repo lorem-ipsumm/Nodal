@@ -12,8 +12,14 @@ interface AppStore {
   addNote: (note: Note) => void;
   removeNote: (folderName: string) => void;
   updateNote: (folderName: string, content: string) => void;
+  editingNoteId: string | undefined;
+  setEditingNoteId: (id: string | undefined) => void;
+  shouldFocusInput: boolean;
+  setShouldFocusInput: (value: boolean) => void;
   navbarVisible: boolean;
+  soundsEnabled: boolean;
   toggleNavbar: () => void;
+  toggleSounds: () => void;
 }
 
 export const useAppStore = create<AppStore>()(
@@ -39,15 +45,23 @@ export const useAppStore = create<AppStore>()(
             n.folderName === folderName ? { ...n, content } : n,
           ),
         })),
+      editingNoteId: undefined,
+      setEditingNoteId: (id: string | undefined) => set({ editingNoteId: id }),
+      shouldFocusInput: false,
+      setShouldFocusInput: (value: boolean) => set({ shouldFocusInput: value }),
       navbarVisible: true,
+      soundsEnabled: true,
       toggleNavbar: () =>
         set((state) => ({ navbarVisible: !state.navbarVisible })),
+      toggleSounds: () =>
+        set((state) => ({ soundsEnabled: !state.soundsEnabled })),
     }),
     {
       name: "app-storage",
       partialize: (state) => ({
         activeFolder: state.activeFolder,
         navbarVisible: state.navbarVisible,
+        soundsEnabled: state.soundsEnabled,
       }),
     },
   ),

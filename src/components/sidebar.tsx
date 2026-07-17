@@ -9,6 +9,8 @@ import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   SunIcon,
+  Volume2,
+  VolumeOff,
 } from "lucide-react";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
@@ -21,8 +23,14 @@ export const Sidebar = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const { notesDirectory, setNotesDirectory, activeFolder, setActiveFolder } =
-    useAppStore();
+  const {
+    notesDirectory,
+    setNotesDirectory,
+    activeFolder,
+    setActiveFolder,
+    toggleSounds,
+    soundsEnabled,
+  } = useAppStore();
   const { theme, toggleTheme } = useThemeStore();
 
   useEffect(() => {
@@ -79,6 +87,7 @@ export const Sidebar = () => {
               className="flex-1 truncate justify-start px-1 font-semibold -translate-x-1 flex gap-2"
               onClick={handleSelectWorkspace}
               title="Select notes directory"
+              data-cuelume-press="bloom"
             >
               <FolderOpenIcon size={20} className="shrink-0" />
               <span className="truncate">
@@ -94,6 +103,7 @@ export const Sidebar = () => {
           size="icon"
           className={cn("h-8 w-8", !collapsed ? "ml-auto" : "mx-auto")}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          data-cuelume-press="toggle"
           onClick={() => setCollapsed((c) => !c)}
         >
           {collapsed ? (
@@ -119,7 +129,7 @@ export const Sidebar = () => {
           </div>
         ) : (
           <div className="h-full flex flex-col px-3">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between">
               <Label>Folders</Label>
               <Button
                 variant="ghost"
@@ -149,6 +159,7 @@ export const Sidebar = () => {
                     className="justify-start cursor-pointer w-full"
                     variant={activeFolder === folder ? "default" : "ghost"}
                     onClick={() => setActiveFolder(folder)}
+                    data-cuelume-press="click"
                   >
                     <FolderIcon size={14} className="shrink-0" />
                     <span className="truncate">{folder}</span>
@@ -166,15 +177,33 @@ export const Sidebar = () => {
         onCreated={(name) => setFolders((prev) => [...prev, name])}
       />
 
-      <section className="flex justify-center px-2 border-t shrink-0 w-full h-12 items-center">
+      <section
+        className={cn(
+          "flex justify-between px-2 border-t shrink-0 w-full min-h-12 items-center",
+          !collapsed ? "" : "pt-2 pb-1 flex-col",
+        )}
+      >
         <Button
           variant="ghost"
           size={"icon"}
-          className={cn("gap-2", !collapsed ? "w-full justify-start pl-3" : "")}
+          className={cn("gap-2", !collapsed ? "" : "")}
           onClick={toggleTheme}
+          data-cuelume-press="toggle"
         >
           {theme === "light" ? <MoonIcon size={14} /> : <SunIcon size={14} />}
-          {!collapsed && (theme === "light" ? "Dark mode" : "Light mode")}
+        </Button>
+        <Button
+          variant="ghost"
+          size={"icon"}
+          className={cn("gap-2", !collapsed ? "" : "")}
+          onClick={toggleSounds}
+          data-cuelume-press="toggle"
+        >
+          {soundsEnabled === true ? (
+            <VolumeOff size={14} />
+          ) : (
+            <Volume2 size={14} />
+          )}
         </Button>
       </section>
     </section>

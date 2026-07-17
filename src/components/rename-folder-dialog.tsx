@@ -1,14 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+import { Dialog } from "./ui/dialog";
 import { Input } from "./ui/input";
-import { Button } from "./ui/button";
+import { ConfirmationDialog } from "./ui/confirmation-dialog";
 
 interface RenameFolderDialogProps {
   open: boolean;
@@ -48,32 +42,23 @@ export const RenameFolderDialog = ({
     onOpenChange(value);
   };
 
-  const isUnchanged = name.trim() === folderName;
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Rename Folder</DialogTitle>
-        </DialogHeader>
-        <Input
-          autoFocus
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleRename();
-          }}
-          placeholder="Folder name..."
-        />
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleRename} disabled={!name.trim() || isUnchanged}>
-            Rename
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+      <ConfirmationDialog
+        title="Rename Folder"
+        description={
+          <Input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleRename();
+            }}
+            placeholder="Folder name..."
+          />
+        }
+        action={handleRename}
+      />
     </Dialog>
   );
 };

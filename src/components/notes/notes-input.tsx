@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { Bold, Code, Italic, List, Paperclip, X, File } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
@@ -7,7 +7,15 @@ import { MarkdownEditor, MarkdownEditorHandle } from "./markdown-editor";
 const isImageDataUrl = (dataUrl: string) => dataUrl.startsWith("data:image/");
 
 export const NotesInput = () => {
-  const { notesDirectory, activeFolder, addNote } = useAppStore();
+  const {
+    notesDirectory,
+    activeFolder,
+    addNote,
+    notes,
+    setEditingNoteId,
+    shouldFocusInput,
+    setShouldFocusInput,
+  } = useAppStore();
   const editorRef = useRef<MarkdownEditorHandle>(null);
   const [content, setContent] = useState("");
   const [pendingFiles, setPendingFiles] = useState<
@@ -62,6 +70,28 @@ export const NotesInput = () => {
       setPendingFiles((prev) => [...prev, ...selected]);
     }
   };
+
+  useEffect(() => {
+    if (shouldFocusInput) {
+      editorRef.current?.focus();
+      setShouldFocusInput(false);
+    }
+  }, [shouldFocusInput, setShouldFocusInput]);
+
+  useEffect(() => {
+    if (activeFolder) {
+      editorRef.current?.focus();
+    }
+  }, [activeFolder]);
+
+  const handleArrowUp = useCallback(() => {
+    if (content !== "") return;
+    const latest = notes.reduce<(typeof notes)[0] | undefined>(
+      (max, n) => (!max || n.timestamp > max.timestamp ? n : max),
+      undefined,
+    );
+    if (latest) setEditingNoteId(latest.folderName);
+  }, [content, notes, setEditingNoteId]);
 
   const removePendingFile = (filePath: string) => {
     setPendingFiles((prev) => prev.filter((f) => f.filePath !== filePath));
@@ -142,28 +172,36 @@ export const NotesInput = () => {
           <Button
             variant={"ghost"}
             onClick={() => editorRef.current?.wrapSelection("**", "**")}
+            data-cuelume-press="click"
           >
             <Bold />
           </Button>
           <Button
             variant={"ghost"}
+            data-cuelume-press="click"
             onClick={() => editorRef.current?.wrapSelection("*", "*")}
           >
             <Italic />
           </Button>
           <Button
+            data-cuelume-press="click"
             variant={"ghost"}
             onClick={() => editorRef.current?.wrapSelection("`", "`")}
           >
             <Code />
           </Button>
           <Button
+            data-cuelume-press="click"
             variant={"ghost"}
             onClick={() => editorRef.current?.insertLinePrefix("- ")}
           >
             <List />
           </Button>
-          <Button variant={"ghost"} onClick={handleSelectFiles}>
+          <Button
+            variant={"ghost"}
+            onClick={handleSelectFiles}
+            data-cuelume-press="bloom"
+          >
             <Paperclip />
           </Button>
         </section>
@@ -173,6 +211,7 @@ export const NotesInput = () => {
             value={content}
             onChange={setContent}
             onSubmit={createNote}
+            onArrowUp={handleArrowUp}
             placeholder="Write a note..."
             className="flex-1 min-w-0 px-3 min-h-16"
           />

@@ -28,21 +28,25 @@ export const ConfirmationDialog = ({
   return (
     <DialogContent className="lg:max-w-120">
       <DialogHeader>
-        <DialogTitle>{title}</DialogTitle>
+        <DialogTitle className="mb-2">{title}</DialogTitle>
         {description && <DialogDescription>{description}</DialogDescription>}
       </DialogHeader>
       <DialogFooter className="justify-start! flex-row gap-2 md:gap-1">
         <DialogClose>
-          <Button variant={"outline"}>Cancel</Button>
+          <Button variant={"outline"} data-cuelume-press="error">
+            Cancel
+          </Button>
         </DialogClose>
         {options?.map((option) => (
           <DialogClose onClick={option.action} key={option.text}>
-            <Button variant={"outline"}>{option.text}</Button>
+            <Button variant={"outline"} data-cuelume-press="success">
+              {option.text}
+            </Button>
           </DialogClose>
         ))}
         <DialogClose onClick={action}>
           <DialogClose>
-            <Button>Continue</Button>
+            <Button data-cuelume-press="success">Continue</Button>
           </DialogClose>
         </DialogClose>
       </DialogFooter>

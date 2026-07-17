@@ -1,14 +1,16 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { FolderSelectDialog } from "../folder-select-dialog";
 import { Note } from "@/lib/types";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { Button } from "../ui/button";
 import {
   Copy,
+  Edit,
   Edit2,
   File,
   FileAudio,
@@ -57,8 +59,15 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
 
   const [contextMenuImage, setContextMenuImage] = useState<string | null>(null);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
-  const { notesDirectory, activeFolder, updateNote, removeNote } =
-    useAppStore();
+  const {
+    notesDirectory,
+    activeFolder,
+    updateNote,
+    removeNote,
+    editingNoteId,
+    setEditingNoteId,
+    setShouldFocusInput,
+  } = useAppStore();
 
   const handleSave = async () => {
     const trimmed = editContent.trim();
@@ -67,17 +76,39 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
     await window.ipcRenderer.invoke("update-note", notePath, trimmed);
     updateNote(note.folderName, trimmed);
     setIsEditing(false);
+    setShouldFocusInput(true);
   };
 
   const handleCancel = () => {
     setEditContent(note.content);
     setIsEditing(false);
+    setShouldFocusInput(true);
   };
+
+  useEffect(() => {
+    if (!isEditing) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setEditContent(note.content);
+        setIsEditing(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isEditing, note.content]);
 
   const handleEdit = () => {
     setEditContent(note.content);
     setIsEditing(true);
   };
+
+  useEffect(() => {
+    if (editingNoteId === note.folderName) {
+      setEditContent(note.content);
+      setIsEditing(true);
+      setEditingNoteId(undefined);
+    }
+  }, [editingNoteId, note.folderName, note.content, setEditingNoteId]);
 
   const deleteNote = () => {
     if (!notesDirectory || !activeFolder) return;
@@ -172,24 +203,20 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                     onSubmit={handleSave}
                     onCancel={handleCancel}
                     placeholder="Edit note..."
-                    className="flex-1 min-w-0 px-3 min-h-16"
+                    className="flex-1 min-w-0 px-3 min-h-10"
                     autoFocus
                   />
                 </section>
-                <section className="flex justify-end gap-2 px-3 py-2 border-t">
-                  <Button variant="outline" size="sm" onClick={handleCancel}>
-                    Cancel
-                  </Button>
-                  <Button size="sm" onClick={handleSave}>
-                    Save
-                  </Button>
+                <section className="text-xs text-muted-foreground pl-3 pb-2 flex gap-1.5 items-center">
+                  <Edit size={10} />
+                  escape to cancel • enter to save
                 </section>
               </div>
             ) : (
               <>
                 <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-foreground prose-li:text-foreground prose-code:text-foreground prose-blockquote:text-muted-foreground prose-lead:text-foreground">
                   <Markdown
-                    remarkPlugins={[remarkGfm]}
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
                     components={{
                       a: ({ href, children }) => (
                         <a
@@ -199,6 +226,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                             if (href)
                               window.ipcRenderer.invoke("open-external", href);
                           }}
+                          data-cuelume-press="bloom"
                           className="text-primary underline underline-offset-2 hover:opacity-80 cursor-pointer break-words"
                         >
                           {children}
@@ -299,7 +327,9 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                         </td>
                       ),
                       p: ({ children }) => (
-                        <p className="mb-0 mt-0 text-sm">{children}</p>
+                        <p className="mb-3 last:mb-0 mt-0 text-sm">
+                          {children}
+                        </p>
                       ),
                     }}
                   >
@@ -426,7 +456,7 @@ const NoteActions = ({
     return (
       <Tooltip>
         <TooltipTrigger>
-          <Button variant="ghost" onClick={onClick}>
+          <Button variant="ghost" onClick={onClick} data-cuelume-press="click">
             {icon}
           </Button>
         </TooltipTrigger>

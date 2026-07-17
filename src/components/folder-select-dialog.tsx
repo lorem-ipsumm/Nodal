@@ -3,6 +3,7 @@ import { Folder, Search, FolderPlus } from "lucide-react";
 import { Dialog, DialogContent } from "./ui/dialog";
 import { cn } from "@/lib/utils";
 import { CreateFolderDialog } from "./create-folder-dialog";
+
 import { FolderContextMenu } from "./folder-context-menu";
 
 interface FolderSelectDialogProps {
@@ -102,6 +103,7 @@ export const FolderSelectDialog = ({
                       folder === activeFolder &&
                         "bg-accent text-accent-foreground font-medium",
                     )}
+                    data-cuelume-press="click"
                   >
                     <Folder
                       size={15}

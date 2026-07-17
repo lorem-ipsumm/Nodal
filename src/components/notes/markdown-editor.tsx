@@ -74,6 +74,7 @@ const editorTheme = EditorView.theme({
 export interface MarkdownEditorHandle {
   wrapSelection: (before: string, after: string) => void;
   insertLinePrefix: (prefix: string) => void;
+  focus: () => void;
 }
 
 interface MarkdownEditorProps {
@@ -81,6 +82,7 @@ interface MarkdownEditorProps {
   onChange: (value: string) => void;
   onSubmit: () => void;
   onCancel?: () => void;
+  onArrowUp?: () => void;
   placeholder?: string;
   className?: string;
   autoFocus?: boolean;
@@ -91,12 +93,22 @@ export const MarkdownEditor = forwardRef<
   MarkdownEditorProps
 >(
   (
-    { value, onChange, onSubmit, onCancel, placeholder, className, autoFocus },
+    {
+      value,
+      onChange,
+      onSubmit,
+      onCancel,
+      onArrowUp,
+      placeholder,
+      className,
+      autoFocus,
+    },
     ref,
   ) => {
     const editorRef = useRef<ReactCodeMirrorRef>(null);
     const onSubmitRef = useRef(onSubmit);
     const onCancelRef = useRef(onCancel);
+    const onArrowUpRef = useRef(onArrowUp);
 
     useEffect(() => {
       onSubmitRef.current = onSubmit;
@@ -105,6 +117,10 @@ export const MarkdownEditor = forwardRef<
     useEffect(() => {
       onCancelRef.current = onCancel;
     }, [onCancel]);
+
+    useEffect(() => {
+      onArrowUpRef.current = onArrowUp;
+    }, [onArrowUp]);
 
     useImperativeHandle(ref, () => ({
       wrapSelection(before: string, after: string) {
@@ -141,11 +157,18 @@ export const MarkdownEditor = forwardRef<
         });
         view.focus();
       },
+      focus() {
+        requestAnimationFrame(() => {
+          editorRef.current?.view?.focus();
+        });
+      },
     }));
 
     useEffect(() => {
       if (autoFocus) {
-        editorRef.current?.view?.focus();
+        requestAnimationFrame(() => {
+          editorRef.current?.view?.focus();
+        });
       }
     }, [autoFocus]);
 
@@ -168,6 +191,16 @@ export const MarkdownEditor = forwardRef<
               run: () => {
                 if (onCancelRef.current) {
                   onCancelRef.current();
+                  return true;
+                }
+                return false;
+              },
+            },
+            {
+              key: "ArrowUp",
+              run: (view) => {
+                if (onArrowUpRef.current && view.state.doc.length === 0) {
+                  onArrowUpRef.current();
                   return true;
                 }
                 return false;

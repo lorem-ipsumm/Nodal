@@ -1,14 +1,8 @@
 import { useState } from "react";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+import { Dialog } from "./ui/dialog";
 import { Input } from "./ui/input";
-import { Button } from "./ui/button";
+import { ConfirmationDialog } from "./ui/confirmation-dialog";
 
 interface CreateFolderDialogProps {
   open: boolean;
@@ -43,28 +37,21 @@ export const CreateFolderDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>New Folder</DialogTitle>
-        </DialogHeader>
-        <Input
-          autoFocus
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleCreate();
-          }}
-          placeholder="Folder name..."
-        />
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleCreate} disabled={!name.trim()}>
-            Create
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+      <ConfirmationDialog
+        title="New Folder"
+        description={
+          <Input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleCreate();
+            }}
+            placeholder="Folder name..."
+          />
+        }
+        action={handleCreate}
+      />
     </Dialog>
   );
 };
