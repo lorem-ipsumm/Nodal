@@ -31,6 +31,7 @@ import {
   ContextMenuTrigger,
 } from "../ui/context-menu";
 import { NoteActions } from "./note-actions";
+import { LinkPreview } from "./link-preview";
 
 interface NoteItemProps {
   note: Note;
@@ -270,20 +271,32 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                   <Markdown
                     remarkPlugins={[remarkGfm, remarkBreaks]}
                     components={{
-                      a: ({ href, children }) => (
-                        <a
-                          href={href}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (href)
-                              window.ipcRenderer.invoke("open-external", href);
-                          }}
-                          data-cuelume-press="bloom"
-                          className="text-primary underline underline-offset-2 hover:opacity-80 cursor-pointer break-words"
-                        >
-                          {children}
-                        </a>
-                      ),
+                      a: ({ href, children }) => {
+                        const childText = Array.isArray(children)
+                          ? children.map((c) => String(c)).join("")
+                          : String(children ?? "");
+                        const isBareUrl = !!href && childText === href;
+                        return (
+                          <>
+                            <a
+                              href={href}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (href)
+                                  window.ipcRenderer.invoke(
+                                    "open-external",
+                                    href,
+                                  );
+                              }}
+                              data-cuelume-press="bloom"
+                              className="text-primary underline underline-offset-2 hover:opacity-80 cursor-pointer break-words"
+                            >
+                              {children}
+                            </a>
+                            {isBareUrl && <LinkPreview href={href} />}
+                          </>
+                        );
+                      },
                       h1: ({ children }) => (
                         <h1 className="text-2xl font-bold mb-1 pb-1">
                           {children}

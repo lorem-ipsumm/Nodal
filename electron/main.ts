@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
+import { fetchTweet } from "react-tweet/api";
 
 const getMimeType = (ext: string): string => {
   const mimeTypes: Record<string, string> = {
@@ -301,6 +302,70 @@ ipcMain.handle("rename-folder", (_event, oldPath: string, newPath: string) => {
 
 ipcMain.handle("update-note", (_event, notePath: string, content: string) => {
   fs.writeFileSync(path.join(notePath, "note.md"), content, "utf-8");
+});
+
+ipcMain.handle("fetch-og", async (_event, url: string) => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) return null;
+
+    const html = await res.text();
+
+    const extractMeta = (prop: string): string | null => {
+      for (const attr of ["property", "name"]) {
+        const patterns = [
+          new RegExp(
+            `<meta[^>]+${attr}=["']${prop}["'][^>]+content=["']([^"'<>]+)["']`,
+            "i",
+          ),
+          new RegExp(
+            `<meta[^>]+content=["']([^"'<>]+)["'][^>]+${attr}=["']${prop}["']`,
+            "i",
+          ),
+        ];
+        for (const pat of patterns) {
+          const m = html.match(pat);
+          if (m?.[1]) return m[1].trim();
+        }
+      }
+      return null;
+    };
+
+    const titleMatch = html.match(/<title[^>]*>([^<]{1,300})<\/title>/i);
+
+    return {
+      title:
+        extractMeta("og:title") || (titleMatch ? titleMatch[1].trim() : null),
+      description: extractMeta("og:description") || extractMeta("description"),
+      image: extractMeta("og:image"),
+      siteName: extractMeta("og:site_name"),
+      url,
+    };
+  } catch {
+    return null;
+  }
+});
+
+ipcMain.handle("fetch-tweet", async (_event, tweetId: string) => {
+  try {
+    const { data } = await fetchTweet(tweetId);
+    return data ?? null;
+  } catch {
+    return null;
+  }
 });
 
 ipcMain.handle("get-notes", (_event, folderPath: string) => {
