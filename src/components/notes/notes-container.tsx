@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Note } from "@/lib/types";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
+import { Note } from "@/lib/types";
+
 import { NoteItem } from "./note-item";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -34,7 +35,14 @@ const NoteSkeletons = () => (
 );
 
 export const NotesContainer = () => {
-  const { notesDirectory, activeFolder, notes, setNotes } = useAppStore();
+  const {
+    notesDirectory,
+    activeFolder,
+    notes,
+    setNotes,
+    scrollToNoteId,
+    setScrollToNoteId,
+  } = useAppStore();
   const scrollRef = useRef<HTMLElement>(null);
   const shouldScrollToBottom = useRef(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -82,13 +90,21 @@ export const NotesContainer = () => {
 
   useLayoutEffect(() => {
     if (isLoading) return;
-    if (shouldScrollToBottom.current) {
+    if (scrollToNoteId) {
+      const el = scrollRef.current?.querySelector(
+        `[data-note-id="${scrollToNoteId}"]`,
+      );
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        setScrollToNoteId(undefined);
+      }
+    } else if (shouldScrollToBottom.current) {
       scrollToBottom();
       shouldScrollToBottom.current = false;
     } else if (isNearBottom()) {
       scrollToBottom();
     }
-  }, [notes, isLoading]);
+  }, [notes, isLoading, scrollToNoteId, setScrollToNoteId]);
 
   return (
     <section

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Note } from "@/lib/types";
+import { Note, PinnedNote } from "@/lib/types";
 
 interface AppStore {
   notesDirectory: string | undefined;
@@ -20,6 +20,13 @@ interface AppStore {
   soundsEnabled: boolean;
   toggleNavbar: () => void;
   toggleSounds: () => void;
+  pinnedNotes: PinnedNote[];
+  setPinnedNotes: (notes: PinnedNote[]) => void;
+  loadPinnedNotes: () => Promise<void>;
+  pinNote: (note: PinnedNote) => Promise<void>;
+  unpinNote: (folderName: string) => Promise<void>;
+  scrollToNoteId: string | undefined;
+  setScrollToNoteId: (id: string | undefined) => void;
 }
 
 export const useAppStore = create<AppStore>()(
@@ -55,6 +62,26 @@ export const useAppStore = create<AppStore>()(
         set((state) => ({ navbarVisible: !state.navbarVisible })),
       toggleSounds: () =>
         set((state) => ({ soundsEnabled: !state.soundsEnabled })),
+      pinnedNotes: [],
+      setPinnedNotes: (notes: PinnedNote[]) => set({ pinnedNotes: notes }),
+      loadPinnedNotes: async () => {
+        const notes = await window.ipcRenderer.invoke("get-pinned-notes");
+        set({ pinnedNotes: notes });
+      },
+      pinNote: async (note: PinnedNote) => {
+        const updated = await window.ipcRenderer.invoke("pin-note", note);
+        set({ pinnedNotes: updated });
+      },
+      unpinNote: async (folderName: string) => {
+        const updated = await window.ipcRenderer.invoke(
+          "unpin-note",
+          folderName,
+        );
+        set({ pinnedNotes: updated });
+      },
+      scrollToNoteId: undefined,
+      setScrollToNoteId: (id: string | undefined) =>
+        set({ scrollToNoteId: id }),
     }),
     {
       name: "app-storage",

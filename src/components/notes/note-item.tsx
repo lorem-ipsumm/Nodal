@@ -1,13 +1,11 @@
-import { ReactNode, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FolderSelectDialog } from "../folder-select-dialog";
-import { Note } from "@/lib/types";
+import { Note, NoteAction } from "@/lib/types";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { Button } from "../ui/button";
 import {
   Copy,
   Edit,
@@ -18,6 +16,7 @@ import {
   FileText,
   FileVideo,
   FolderInput,
+  Pin,
   StickyNote,
   Trash2,
 } from "lucide-react";
@@ -31,6 +30,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "../ui/context-menu";
+import { NoteActions } from "./note-actions";
 
 interface NoteItemProps {
   note: Note;
@@ -67,7 +67,12 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
     editingNoteId,
     setEditingNoteId,
     setShouldFocusInput,
+    pinnedNotes,
+    pinNote,
+    unpinNote,
   } = useAppStore();
+
+  const isPinned = pinnedNotes.some((p) => p.folderName === note.folderName);
 
   const handleSave = async () => {
     const trimmed = editContent.trim();
@@ -97,10 +102,10 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isEditing, note.content]);
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     setEditContent(note.content);
     setIsEditing(true);
-  };
+  }, [note.content]);
 
   useEffect(() => {
     if (editingNoteId === note.folderName) {
@@ -110,21 +115,24 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
     }
   }, [editingNoteId, note.folderName, note.content, setEditingNoteId]);
 
-  const deleteNote = () => {
+  const deleteNote = useCallback(() => {
     if (!notesDirectory || !activeFolder) return;
     const notePath = `${notesDirectory}/${activeFolder}/${note.folderName}`;
     window.ipcRenderer.invoke("delete-note", notePath).then(() => {
       removeNote(note.folderName);
     });
-  };
+  }, [notesDirectory, activeFolder, note.folderName, removeNote]);
 
-  const handleDelete = (e?: React.MouseEvent) => {
-    if (e?.shiftKey) {
-      deleteNote();
-    } else {
-      setConfirmOpen(true);
-    }
-  };
+  const handleDelete = useCallback(
+    (e?: React.MouseEvent) => {
+      if (e?.shiftKey) {
+        deleteNote();
+      } else {
+        setConfirmOpen(true);
+      }
+    },
+    [deleteNote],
+  );
 
   const handleMoveNote = async (targetFolder: string) => {
     if (!notesDirectory || !activeFolder) return;
@@ -147,6 +155,50 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
     setContextMenuImage(null);
   };
 
+  const actions = useMemo<NoteAction[]>(
+    () => [
+      { label: "Edit", icon: <Edit2 />, onClick: handleEdit },
+      {
+        label: isPinned ? "Unpin Note" : "Pin Note",
+        icon: <Pin className={isPinned ? "fill-current" : ""} />,
+        onClick: () => {
+          if (isPinned) {
+            unpinNote(note.folderName);
+          } else if (activeFolder) {
+            pinNote({
+              folderName: note.folderName,
+              folder: activeFolder,
+              contentPreview: note.content.slice(0, 80).replace(/\n/g, " "),
+            });
+          }
+        },
+      },
+      {
+        label: "Move to Folder",
+        icon: <FolderInput />,
+        onClick: () => setMoveDialogOpen(true),
+        contextMenuOnly: true,
+      },
+      { separator: true },
+      {
+        label: "Delete",
+        icon: <Trash2 />,
+        onClick: handleDelete,
+        variant: "destructive",
+      },
+    ],
+    [
+      handleEdit,
+      handleDelete,
+      isPinned,
+      activeFolder,
+      note.folderName,
+      note.content,
+      pinNote,
+      unpinNote,
+    ],
+  );
+
   return (
     <>
       <ContextMenu
@@ -155,6 +207,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
         }}
       >
         <ContextMenuTrigger
+          data-note-id={note.folderName}
           className={cn(
             "group flex items-start rounded-lg px-4 hover:bg-popover relative w-full select-text",
             isGroupStart ? "mt-3 pt-1 pb-1" : "py-0.5",
@@ -189,8 +242,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
             {!isEditing && (
               <NoteActions
                 className="hidden group-hover:flex"
-                onEdit={handleEdit}
-                onDelete={handleDelete}
+                actions={actions}
               />
             )}
 
@@ -327,7 +379,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                         </td>
                       ),
                       p: ({ children }) => (
-                        <p className="mb-3 last:mb-0 mt-0 text-sm">
+                        <p className="mb-1.5 last:mb-0 mt-0 text-sm">
                           {children}
                         </p>
                       ),
@@ -400,19 +452,19 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
               <ContextMenuSeparator />
             </>
           )}
-          <ContextMenuItem onClick={handleEdit}>
-            <Edit2 />
-            Edit
-          </ContextMenuItem>
-          <ContextMenuItem onClick={() => setMoveDialogOpen(true)}>
-            <FolderInput />
-            Move to Folder
-          </ContextMenuItem>
-          <ContextMenuSeparator />
-          <ContextMenuItem variant="destructive" onClick={() => handleDelete()}>
-            <Trash2 />
-            Delete
-          </ContextMenuItem>
+          {actions.map((action, i) => {
+            if ("separator" in action) return <ContextMenuSeparator key={i} />;
+            return (
+              <ContextMenuItem
+                key={action.label}
+                variant={action.variant}
+                onClick={action.onClick}
+              >
+                {action.icon}
+                {action.label}
+              </ContextMenuItem>
+            );
+          })}
         </ContextMenuContent>
       </ContextMenu>
 
@@ -432,53 +484,6 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
         onSelect={handleMoveNote}
       />
     </>
-  );
-};
-
-const NoteActions = ({
-  className,
-  onEdit,
-  onDelete,
-}: {
-  className?: string;
-  onEdit: () => void;
-  onDelete: (e?: React.MouseEvent) => void;
-}) => {
-  const ActionButton = ({
-    hint,
-    onClick,
-    icon,
-  }: {
-    hint: ReactNode;
-    onClick: (e?: React.MouseEvent) => void;
-    icon: ReactNode;
-  }) => {
-    return (
-      <Tooltip>
-        <TooltipTrigger>
-          <Button variant="ghost" onClick={onClick} data-cuelume-press="click">
-            {icon}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{hint}</TooltipContent>
-      </Tooltip>
-    );
-  };
-
-  return (
-    <div
-      className={cn(
-        "bg-popover absolute right-2 -top-4 border rounded-md shadow-sm z-10",
-        className,
-      )}
-    >
-      <ActionButton hint="Edit" icon={<Edit2 />} onClick={() => onEdit()} />
-      <ActionButton
-        hint="Delete"
-        icon={<Trash2 className="text-destructive" />}
-        onClick={onDelete}
-      />
-    </div>
   );
 };
 

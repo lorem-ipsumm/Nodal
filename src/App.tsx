@@ -1,15 +1,19 @@
 import "./App.css";
 import { useEffect } from "react";
+import { useAppStore } from "./lib/hooks/store/use-app-store";
 import { Navbar } from "./components/navbar";
 import { FolderToolbar } from "./components/folder-toolbar";
 import { NotesContainer } from "./components/notes/notes-container";
 import { NotesInput } from "./components/notes/notes-input";
 import { Sidebar } from "./components/sidebar";
-import { useAppStore } from "./lib/hooks/store/use-app-store";
 
 // App component
 function App() {
-  const { navbarVisible, toggleNavbar } = useAppStore();
+  const { navbarVisible, toggleNavbar, loadPinnedNotes } = useAppStore();
+
+  useEffect(() => {
+    loadPinnedNotes();
+  }, [loadPinnedNotes]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

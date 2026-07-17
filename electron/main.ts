@@ -58,8 +58,17 @@ import path from "node:path";
 import { update } from "./update";
 import Store from "electron-store";
 
-const store = new Store<{ workspace: string | undefined }>({
-  defaults: { workspace: undefined },
+interface PinnedNote {
+  folderName: string;
+  folder: string;
+  contentPreview: string;
+}
+
+const store = new Store<{
+  workspace: string | undefined;
+  pinnedNotes: PinnedNote[];
+}>({
+  defaults: { workspace: undefined, pinnedNotes: [] },
 });
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -130,6 +139,27 @@ app.on("activate", () => {
 });
 
 app.whenReady().then(createWindow);
+
+ipcMain.handle("get-pinned-notes", () => {
+  return store.get("pinnedNotes");
+});
+
+ipcMain.handle("pin-note", (_event, note: PinnedNote) => {
+  const pins = store.get("pinnedNotes");
+  if (!pins.find((p) => p.folderName === note.folderName)) {
+    store.set("pinnedNotes", [...pins, note]);
+  }
+  return store.get("pinnedNotes");
+});
+
+ipcMain.handle("unpin-note", (_event, folderName: string) => {
+  const pins = store.get("pinnedNotes");
+  store.set(
+    "pinnedNotes",
+    pins.filter((p) => p.folderName !== folderName),
+  );
+  return store.get("pinnedNotes");
+});
 
 ipcMain.handle("get-workspace", () => {
   return store.get("workspace");
