@@ -383,3 +383,67 @@ ipcMain.handle("get-notes", (_event, folderPath: string) => {
     })
     .sort((a, b) => a.timestamp - b.timestamp);
 });
+
+ipcMain.handle(
+  "get-notes-paginated",
+  (_event, folderPath: string, groupOffset: number, groupLimit: number) => {
+    const GROUP_WINDOW_MS = 5 * 60 * 1000;
+
+    // Read only directory names first (no file I/O for content yet)
+    const entries = fs.readdirSync(folderPath, { withFileTypes: true });
+    const allEntries = entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => ({
+        folderName: entry.name,
+        timestamp: parseInt(entry.name, 10),
+      }))
+      .sort((a, b) => a.timestamp - b.timestamp);
+
+    // Build groups using the same 5-minute window logic as the frontend
+    type Entry = { folderName: string; timestamp: number };
+    const groups: Entry[][] = [];
+    let currentGroup: Entry[] = [];
+
+    for (let i = 0; i < allEntries.length; i++) {
+      if (i === 0) {
+        currentGroup.push(allEntries[i]);
+      } else {
+        const prev = allEntries[i - 1];
+        const curr = allEntries[i];
+        if (curr.timestamp - prev.timestamp > GROUP_WINDOW_MS) {
+          groups.push(currentGroup);
+          currentGroup = [curr];
+        } else {
+          currentGroup.push(curr);
+        }
+      }
+    }
+    if (currentGroup.length > 0) groups.push(currentGroup);
+
+    const totalGroups = groups.length;
+
+    // Slice from the end: groupOffset=0 gets the latest groupLimit groups
+    const endIdx = totalGroups - groupOffset;
+    const startIdx = Math.max(0, endIdx - groupLimit);
+
+    const selectedGroups = groups.slice(startIdx, endIdx);
+    const hasMore = startIdx > 0;
+
+    // Now read file content only for the selected notes
+    const selectedNotes = selectedGroups.flat().map((entry) => {
+      const notePath = path.join(folderPath, entry.folderName);
+      const content = fs.readFileSync(path.join(notePath, "note.md"), "utf-8");
+      const attachments = fs
+        .readdirSync(notePath)
+        .filter((file) => file !== "note.md");
+      return {
+        folderName: entry.folderName,
+        content,
+        timestamp: entry.timestamp,
+        attachments,
+      };
+    });
+
+    return { notes: selectedNotes, hasMore };
+  },
+);
