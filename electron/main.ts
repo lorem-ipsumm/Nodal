@@ -181,7 +181,7 @@ ipcMain.handle("get-folders", (_event, dirPath?: string) => {
   const targetPath = dirPath ?? app.getPath("desktop");
   const entries = fs.readdirSync(targetPath, { withFileTypes: true });
   return entries
-    .filter((entry) => entry.isDirectory())
+    .filter((entry) => entry.isDirectory() && entry.name !== ".stfolder")
     .map((entry) => entry.name);
 });
 
