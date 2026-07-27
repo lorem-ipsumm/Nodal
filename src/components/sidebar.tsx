@@ -236,7 +236,7 @@ export const Sidebar = () => {
       {/* Header */}
       <section
         className={cn(
-          "h-12 flex items-center px-3 justify-between border-b mb-3 shrink-0",
+          "h-12 flex items-center px-3 justify-between border-b mb-2 shrink-0",
           collapsed ? "justify-center" : "",
         )}
       >
