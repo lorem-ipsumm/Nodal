@@ -32,6 +32,7 @@ import {
 } from "../ui/context-menu";
 import { NoteActions } from "./note-actions";
 import { LinkPreview } from "./link-preview";
+import { getNodalApi } from "@/lib/api/nodal-api";
 
 interface NoteItemProps {
   note: Note;
@@ -79,7 +80,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
     const trimmed = editContent.trim();
     if (!trimmed || !notesDirectory || !activeFolder) return;
     const notePath = `${notesDirectory}/${activeFolder}/${note.folderName}`;
-    await window.ipcRenderer.invoke("update-note", notePath, trimmed);
+    await getNodalApi().updateNote(notePath, trimmed);
     updateNote(note.folderName, trimmed);
     setIsEditing(false);
     setShouldFocusInput(true);
@@ -119,7 +120,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
   const deleteNote = useCallback(() => {
     if (!notesDirectory || !activeFolder) return;
     const notePath = `${notesDirectory}/${activeFolder}/${note.folderName}`;
-    window.ipcRenderer.invoke("delete-note", notePath).then(() => {
+    getNodalApi().deleteNote(notePath).then(() => {
       removeNote(note.folderName);
     });
   }, [notesDirectory, activeFolder, note.folderName, removeNote]);
@@ -139,11 +140,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
     if (!notesDirectory || !activeFolder) return;
     const sourcePath = `${notesDirectory}/${activeFolder}/${note.folderName}`;
     const destinationFolderPath = `${notesDirectory}/${targetFolder}`;
-    await window.ipcRenderer.invoke(
-      "move-note",
-      sourcePath,
-      destinationFolderPath,
-    );
+    await getNodalApi().moveNote(sourcePath, destinationFolderPath);
     removeNote(note.folderName);
     setMoveDialogOpen(false);
   };
@@ -283,10 +280,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 if (href)
-                                  window.ipcRenderer.invoke(
-                                    "open-external",
-                                    href,
-                                  );
+                                  getNodalApi().openExternal(href);
                               }}
                               data-cuelume-press="bloom"
                               className="text-primary underline underline-offset-2 hover:opacity-80 cursor-pointer break-words"
@@ -432,11 +426,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                           <button
                             key={fileName}
                             onClick={() =>
-                              window.ipcRenderer.invoke(
-                                "open-file",
-                                dataUrl,
-                                fileName,
-                              )
+                              getNodalApi().openFile(dataUrl, fileName)
                             }
                             className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted hover:bg-muted/70 transition-colors text-sm max-w-56 cursor-pointer"
                           >

@@ -3,6 +3,7 @@ import { useAppStore } from "@/lib/hooks/store/use-app-store";
 import { Dialog } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { ConfirmationDialog } from "./ui/confirmation-dialog";
+import { getNodalApi } from "@/lib/api/nodal-api";
 
 interface CreateFolderDialogProps {
   open: boolean;
@@ -22,7 +23,7 @@ export const CreateFolderDialog = ({
     const trimmed = name.trim();
     if (!trimmed || !notesDirectory) return;
     const folderPath = `${notesDirectory}/${trimmed}`;
-    window.ipcRenderer.invoke("create-folder", folderPath).then(() => {
+    getNodalApi().createFolder(folderPath).then(() => {
       setActiveFolder(trimmed);
       onCreated?.(trimmed);
       setName("");

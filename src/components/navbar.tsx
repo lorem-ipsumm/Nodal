@@ -2,6 +2,7 @@ import { MinusIcon, SquareIcon, XIcon } from "lucide-react";
 import { Label } from "./ui/label";
 import Icon from "@/assets/nodal.png";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
+import { getNodalApi } from "@/lib/api/nodal-api";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -13,9 +14,9 @@ import {
 export const Navbar = () => {
   const { toggleNavbar } = useAppStore();
 
-  const handleMinimize = () => window.ipcRenderer.invoke("window-minimize");
-  const handleMaximize = () => window.ipcRenderer.invoke("window-maximize");
-  const handleClose = () => window.ipcRenderer.invoke("window-close");
+  const handleMinimize = () => getNodalApi().windowMinimize();
+  const handleMaximize = () => getNodalApi().windowMaximize();
+  const handleClose = () => getNodalApi().windowClose();
 
   return (
     <ContextMenu>

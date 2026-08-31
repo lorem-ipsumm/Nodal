@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { CreateFolderDialog } from "./create-folder-dialog";
 
 import { FolderContextMenu } from "./folder-context-menu";
+import { getNodalApi } from "@/lib/api/nodal-api";
 
 interface FolderSelectDialogProps {
   open: boolean;
@@ -31,8 +32,8 @@ export const FolderSelectDialog = ({
 
   useEffect(() => {
     if (!open || !notesDirectory) return;
-    window.ipcRenderer
-      .invoke("get-folders", notesDirectory)
+    getNodalApi()
+      .getFolders(notesDirectory)
       .then((result: string[]) => setFolders(result));
   }, [open, notesDirectory]);
 

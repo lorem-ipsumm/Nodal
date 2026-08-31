@@ -7,8 +7,13 @@ import { NotesContainer } from "./components/notes/notes-container";
 import { NotesInput } from "./components/notes/notes-input";
 import { Sidebar } from "./components/sidebar";
 
+interface AppProps {
+  showNavbar?: boolean;
+  fullHeight?: boolean;
+}
+
 // App component
-function App() {
+export default function App({ showNavbar = true, fullHeight = false }: AppProps) {
   const { navbarVisible, toggleNavbar, loadPinnedNotes } = useAppStore();
 
   useEffect(() => {
@@ -28,8 +33,10 @@ function App() {
   }, [toggleNavbar]);
 
   return (
-    <div className="bg-background h-screen flex flex-col w-screen">
-      {navbarVisible && <Navbar />}
+    <div
+      className={`bg-background flex flex-col ${fullHeight ? "h-full w-full" : "h-screen w-screen"}`}
+    >
+      {showNavbar && navbarVisible && <Navbar />}
       <div className="flex flex-1 min-h-0">
         <Sidebar />
         <section className="w-full min-w-0 flex flex-col">
@@ -41,5 +48,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

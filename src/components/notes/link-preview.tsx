@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getNodalApi } from "@/lib/api/nodal-api";
 import type { Tweet } from "react-tweet/api";
 
 interface OGData {
@@ -70,8 +71,8 @@ const TweetPreview = ({ href }: { href: string }) => {
       setTweet(tweetCache.get(tweetId) ?? null);
       return;
     }
-    window.ipcRenderer
-      .invoke("fetch-tweet", tweetId)
+    getNodalApi()
+      .fetchTweet(tweetId)
       .then((data: Tweet | null) => {
         tweetCache.set(tweetId, data);
         setTweet(data);
@@ -87,10 +88,10 @@ const TweetPreview = ({ href }: { href: string }) => {
     <div
       role="button"
       tabIndex={0}
-      onClick={() => window.ipcRenderer.invoke("open-external", href)}
+      onClick={() => getNodalApi().openExternal(href)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ")
-          window.ipcRenderer.invoke("open-external", href);
+          getNodalApi().openExternal(href);
       }}
       className="not-prose mt-2 flex max-w-sm cursor-pointer flex-col gap-2 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/50 hover:bg-card/80"
     >
@@ -140,8 +141,8 @@ const OGPreview = ({ href }: { href: string }) => {
       setData(ogCache.get(href) ?? null);
       return;
     }
-    window.ipcRenderer
-      .invoke("fetch-og", href)
+    getNodalApi()
+      .fetchOg(href)
       .then((result: OGData | null) => {
         ogCache.set(href, result);
         setData(result);
@@ -155,10 +156,10 @@ const OGPreview = ({ href }: { href: string }) => {
     <div
       role="button"
       tabIndex={0}
-      onClick={() => window.ipcRenderer.invoke("open-external", href)}
+      onClick={() => getNodalApi().openExternal(href)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ")
-          window.ipcRenderer.invoke("open-external", href);
+          getNodalApi().openExternal(href);
       }}
       data-cuelume-press="bloom"
       className="not-prose mt-2 flex max-w-sm cursor-pointer flex-col overflow-hidden rounded-lg border border-border transition-colors hover:border-primary/50 group"

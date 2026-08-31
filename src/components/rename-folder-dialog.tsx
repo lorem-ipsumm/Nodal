@@ -3,6 +3,7 @@ import { useAppStore } from "@/lib/hooks/store/use-app-store";
 import { Dialog } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { ConfirmationDialog } from "./ui/confirmation-dialog";
+import { getNodalApi } from "@/lib/api/nodal-api";
 
 interface RenameFolderDialogProps {
   open: boolean;
@@ -30,7 +31,7 @@ export const RenameFolderDialog = ({
       return;
     const oldPath = `${notesDirectory}/${folderName}`;
     const newPath = `${notesDirectory}/${trimmed}`;
-    window.ipcRenderer.invoke("rename-folder", oldPath, newPath).then(() => {
+    getNodalApi().renameFolder(oldPath, newPath).then(() => {
       if (activeFolder === folderName) setActiveFolder(trimmed);
       onRenamed?.(folderName, trimmed);
       onOpenChange(false);

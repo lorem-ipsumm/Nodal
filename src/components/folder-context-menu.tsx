@@ -11,6 +11,7 @@ import { Dialog } from "./ui/dialog";
 import { ConfirmationDialog } from "./ui/confirmation-dialog";
 import { RenameFolderDialog } from "./rename-folder-dialog";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
+import { getNodalApi } from "@/lib/api/nodal-api";
 
 interface FolderContextMenuProps {
   folder: string;
@@ -32,7 +33,7 @@ export const FolderContextMenu = ({
   const handleConfirmDelete = () => {
     if (!notesDirectory) return;
     const folderPath = `${notesDirectory}/${folder}`;
-    window.ipcRenderer.invoke("delete-folder", folderPath).then(() => {
+    getNodalApi().deleteFolder(folderPath).then(() => {
       if (activeFolder === folder) setActiveFolder(undefined);
       onDeleted?.(folder);
     });

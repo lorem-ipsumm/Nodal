@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Note, PinnedNote } from "@/lib/types";
+import { getNodalApi } from "@/lib/api/nodal-api";
 
 interface AppStore {
   notesDirectory: string | undefined;
@@ -65,18 +66,15 @@ export const useAppStore = create<AppStore>()(
       pinnedNotes: [],
       setPinnedNotes: (notes: PinnedNote[]) => set({ pinnedNotes: notes }),
       loadPinnedNotes: async () => {
-        const notes = await window.ipcRenderer.invoke("get-pinned-notes");
+        const notes = await getNodalApi().getPinnedNotes();
         set({ pinnedNotes: notes });
       },
       pinNote: async (note: PinnedNote) => {
-        const updated = await window.ipcRenderer.invoke("pin-note", note);
+        const updated = await getNodalApi().pinNote(note);
         set({ pinnedNotes: updated });
       },
       unpinNote: async (folderName: string) => {
-        const updated = await window.ipcRenderer.invoke(
-          "unpin-note",
-          folderName,
-        );
+        const updated = await getNodalApi().unpinNote(folderName);
         set({ pinnedNotes: updated });
       },
       scrollToNoteId: undefined,

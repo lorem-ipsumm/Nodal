@@ -11,6 +11,7 @@ import { Note } from "@/lib/types";
 import { NoteItem } from "./note-item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
+import { getNodalApi } from "@/lib/api/nodal-api";
 
 const SCROLL_THRESHOLD = 100;
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
@@ -50,8 +51,7 @@ const resolveAttachments = async (
     result.map(async (note) => {
       if (note.attachments.length === 0) return note;
       const notePath = `${folderPath}/${note.folderName}`;
-      const resolvedAttachments = await window.ipcRenderer.invoke(
-        "read-attachments",
+      const resolvedAttachments = await getNodalApi().readAttachments(
         notePath,
         note.attachments,
       );
@@ -100,12 +100,12 @@ export const NotesContainer = () => {
     const el = scrollRef.current;
     const prevScrollHeight = el?.scrollHeight ?? 0;
 
-    const { notes: result, hasMore: more } = await window.ipcRenderer.invoke(
-      "get-notes-paginated",
-      folderPath,
-      nextOffset,
-      GROUPS_PER_PAGE,
-    );
+    const { notes: result, hasMore: more } =
+      await getNodalApi().getNotesPaginated(
+        folderPath,
+        nextOffset,
+        GROUPS_PER_PAGE,
+      );
 
     const resolved = await resolveAttachments(result, folderPath);
 
@@ -147,8 +147,8 @@ export const NotesContainer = () => {
     setIsLoading(true);
     setHasMore(false);
 
-    window.ipcRenderer
-      .invoke("get-notes-paginated", folderPath, 0, GROUPS_PER_PAGE)
+    getNodalApi()
+      .getNotesPaginated(folderPath, 0, GROUPS_PER_PAGE)
       .then(
         async ({
           notes: result,

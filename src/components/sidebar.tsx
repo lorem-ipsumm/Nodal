@@ -37,6 +37,7 @@ import { CreateFolderDialog } from "./create-folder-dialog";
 import { CreateCategoryDialog } from "./create-category-dialog";
 import { SidebarFolderItem } from "./sidebar-folder-item";
 import { SidebarCategorySection } from "./sidebar-category";
+import { getNodalApi } from "@/lib/api/nodal-api";
 
 export const Sidebar = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -73,13 +74,13 @@ export const Sidebar = () => {
   );
 
   useEffect(() => {
-    window.ipcRenderer
-      .invoke("get-workspace")
+    getNodalApi()
+      .getWorkspace()
       .then((workspace: string | undefined) => {
         if (workspace) {
           setNotesDirectory(workspace);
-          window.ipcRenderer
-            .invoke("get-folders", workspace)
+          getNodalApi()
+            .getFolders(workspace)
             .then((result: string[]) => {
               syncFolders(result);
               setIsLoading(false);
@@ -91,14 +92,14 @@ export const Sidebar = () => {
   }, [setNotesDirectory, syncFolders]);
 
   const handleSelectWorkspace = () => {
-    window.ipcRenderer
-      .invoke("select-workspace")
+    getNodalApi()
+      .selectWorkspace()
       .then((selectedPath: string | null) => {
         if (selectedPath) {
           setNotesDirectory(selectedPath);
           setActiveFolder(undefined);
-          window.ipcRenderer
-            .invoke("get-folders", selectedPath)
+          getNodalApi()
+            .getFolders(selectedPath)
             .then((result: string[]) => {
               syncFolders(result);
             });

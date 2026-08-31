@@ -3,6 +3,7 @@ import { Bold, Code, Italic, List, Paperclip, X, File } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
 import { MarkdownEditor, MarkdownEditorHandle } from "./markdown-editor";
+import { getNodalApi } from "@/lib/api/nodal-api";
 
 const isImageDataUrl = (dataUrl: string) => dataUrl.startsWith("data:image/");
 
@@ -47,25 +48,16 @@ export const NotesInput = () => {
       })),
     });
 
-    await window.ipcRenderer.invoke(
-      "create-note",
-      folderPath,
-      folderName,
-      content,
-    );
+    await getNodalApi().createNote(folderPath, folderName, content);
 
     if (filesToAttach.length > 0) {
-      await window.ipcRenderer.invoke(
-        "copy-attachments",
-        notePath,
-        filesToAttach,
-      );
+      await getNodalApi().copyAttachments(notePath, filesToAttach);
     }
   };
 
   const handleSelectFiles = async () => {
     const selected: { filePath: string; dataUrl: string }[] =
-      await window.ipcRenderer.invoke("select-files");
+      await getNodalApi().selectFiles();
     if (selected.length > 0) {
       setPendingFiles((prev) => [...prev, ...selected]);
     }
@@ -116,8 +108,7 @@ export const NotesInput = () => {
       const ext = item.type.split("/")[1] || "png";
       const fileName = `paste-${Date.now()}.${ext}`;
 
-      const tempPath: string = await window.ipcRenderer.invoke(
-        "write-temp-file",
+      const tempPath: string = await getNodalApi().writeTempFile(
         dataUrl,
         fileName,
       );
