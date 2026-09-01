@@ -7,52 +7,35 @@ import type {
 
 const DEMO_WORKSPACE = "demo-workspace";
 
-const now = Date.now();
-const demoFolders: Record<string, Note[]> = {
-  weclome: [
-    {
-      folderName: String(now - 1000 * 60 * 15),
-      content:
-        "# Welcome to Nodal\n\nCapture thoughts as they happen, then organize them when you are ready.\n\nThis browser demo uses sample data. Try editing a note, creating a new one, or switching folders.",
-      timestamp: now - 1000 * 60 * 15,
+const demoFiles = import.meta.glob("../../../web/demo-content/**/*.md", {
+  eager: true,
+  import: "default",
+  query: "?raw",
+}) as Record<string, string>;
+
+const demoFolders = Object.entries(demoFiles).reduce<Record<string, Note[]>>(
+  (folders, [filePath, content], index) => {
+    const relativePath = filePath.split("/demo-content/")[1];
+    if (!relativePath) return folders;
+
+    const parts = relativePath.split("/");
+    const folder = parts[0];
+    const fileName =
+      parts[parts.length - 1]?.replace(/\.md$/, "") ?? "";
+    if (!folder || !fileName) return folders;
+
+    const timestamp = Number(fileName) || Date.now() - index * 1000 * 60;
+    folders[folder] ??= [];
+    folders[folder].push({
+      folderName: fileName,
+      content,
+      timestamp,
       attachments: [],
-    },
-    {
-      folderName: String(now - 1000 * 60 * 45),
-      content:
-        "# A calmer place for ideas\n\nNodal keeps your notes close, flexible, and easy to revisit.",
-      timestamp: now - 1000 * 60 * 45,
-      attachments: [],
-    },
-  ],
-  features: [
-    {
-      folderName: String(now - 1000 * 60 * 60),
-      content:
-        "# Features to explore\n\n- Capture notes quickly\n- Organize with folders\n- Pin important thoughts\n- Write in Markdown\n- Keep your workspace focused",
-      timestamp: now - 1000 * 60 * 60,
-      attachments: [],
-    },
-  ],
-  "reading list": [
-    {
-      folderName: String(now - 1000 * 60 * 60 * 4),
-      content:
-        "# Designing tools people return to\n\nA good tool should get out of the way. Keep the interaction quick, the structure flexible, and the content easy to revisit.",
-      timestamp: now - 1000 * 60 * 60 * 4,
-      attachments: [],
-    },
-  ],
-  ideas: [
-    {
-      folderName: String(now - 1000 * 60 * 60 * 8),
-      content:
-        "# Quiet tools for focused work\n\nWhat would a calmer workspace look like?\n\n- Fewer notifications\n- Notes close to the work\n- Simple organization\n- Easy search",
-      timestamp: now - 1000 * 60 * 60 * 8,
-      attachments: [],
-    },
-  ],
-};
+    });
+    return folders;
+  },
+  {},
+);
 
 let pinnedNotes: PinnedNote[] = [];
 

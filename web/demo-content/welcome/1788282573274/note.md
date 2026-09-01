@@ -1,0 +1,1 @@
+Nodal also supports **markdown** giving you full flexibility in how your notes are structured 

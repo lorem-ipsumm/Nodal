@@ -1,0 +1,1 @@
+Capture thoughts as they happen, then organize them when you are ready.

@@ -1,0 +1,1 @@
+Nodal is structured like Discord and Slack allowing you to easily organize quick thoughts in a server-like structure

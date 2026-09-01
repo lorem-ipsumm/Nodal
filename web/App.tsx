@@ -16,7 +16,6 @@ import {
 import { WebNavbar } from "./WebNavbar";
 import backgroundVideo from "../src/assets/double-flowers.mp4";
 
-
 setNodalApi(createDemoApi());
 
 const fadeUp = {
@@ -51,6 +50,7 @@ export default function WebApp() {
   const shouldReduceMotion = useReducedMotion();
   const innerWindowRef = useRef<HTMLElement>(null);
   const demoRef = useRef<HTMLElement>(null);
+
   const transition = shouldReduceMotion
     ? { duration: 0 }
     : { duration: 0.7, ease: "easeOut" as const };
@@ -87,7 +87,6 @@ export default function WebApp() {
     [0, 0.75, 1],
     shouldReduceMotion ? [0, 0, 0] : [1, 0.25, 0],
   );
-
 
   useEffect(() => {
     useSidebarStore.setState({
