@@ -1,5 +1,11 @@
-import { useEffect } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef } from "react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 import App from "../src/App";
 import { createDemoApi } from "../src/lib/api/demo-api";
 import { setNodalApi } from "../src/lib/api/nodal-api";
@@ -9,7 +15,7 @@ import {
 } from "../src/lib/hooks/store/use-sidebar-store";
 import { WebNavbar } from "./WebNavbar";
 import backgroundVideo from "../src/assets/double-flowers.mp4";
-import { FolderTree, NotebookPen, Search } from "lucide-react";
+
 
 setNodalApi(createDemoApi());
 
@@ -43,9 +49,45 @@ const demoCategories: SidebarCategory[] = [
 
 export default function WebApp() {
   const shouldReduceMotion = useReducedMotion();
+  const innerWindowRef = useRef<HTMLElement>(null);
+  const demoRef = useRef<HTMLElement>(null);
   const transition = shouldReduceMotion
     ? { duration: 0 }
     : { duration: 0.7, ease: "easeOut" as const };
+
+  // The demo has a different scroll treatment from the hero: it expands as
+  // its section moves from the bottom of the inner window to the top.
+  const { scrollYProgress: demoScrollProgress } = useScroll({
+    container: innerWindowRef,
+    target: demoRef,
+    offset: ["start end", "end end"],
+  });
+  const smoothDemoProgress = useSpring(demoScrollProgress, {
+    stiffness: 90,
+    damping: 24,
+    restDelta: 0.001,
+  });
+  const demoScale = useTransform(
+    smoothDemoProgress,
+    [0, 1],
+    shouldReduceMotion ? [1, 1] : [0.86, 1],
+  );
+  const demoY = useTransform(
+    smoothDemoProgress,
+    [0, 1],
+    shouldReduceMotion ? [0, 0] : [32, 0],
+  );
+  const demoOpacity = useTransform(
+    smoothDemoProgress,
+    [0, 0.35],
+    shouldReduceMotion ? [1, 1] : [0.55, 1],
+  );
+  const demoFrameOpacity = useTransform(
+    smoothDemoProgress,
+    [0, 0.75, 1],
+    shouldReduceMotion ? [0, 0, 0] : [1, 0.25, 0],
+  );
+
 
   useEffect(() => {
     useSidebarStore.setState({
@@ -57,10 +99,14 @@ export default function WebApp() {
   return (
     <div className="relative flex h-screen w-full overflow-hidden bg-sidebar py-3 pr-3 max-sm:px-3 max-sm:py-3">
       <WebNavbar />
-      <section className="relative h-full min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-2xl border">
-        <div className="relative min-h-full">
+      {/* inner window */}
+      <section
+        ref={innerWindowRef}
+        className="relative h-full min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-2xl border"
+      >
+        <div className="pointer-events-none sticky top-0 z-0 h-0">
           <video
-            className="pointer-events-none absolute inset-0 h-full w-full scale-105 object-cover"
+            className="absolute left-0 top-0 h-[calc(100vh-1.5rem)] w-full scale-105 object-cover"
             src={backgroundVideo}
             autoPlay
             loop
@@ -68,7 +114,9 @@ export default function WebApp() {
             playsInline
             aria-hidden="true"
           />
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm dark:bg-background/50 dark:backdrop-blur-sm" />
+          <div className="absolute left-0 top-0 h-[calc(100vh-1.5rem)] w-full bg-background/80 backdrop-blur-sm dark:bg-background/50 dark:backdrop-blur-sm" />
+        </div>
+        <div className="relative z-10 min-h-full">
           <main className="relative min-h-full">
             <motion.section
               className="flex min-h-[48vh] flex-col justify-center px-12 py-16 max-lg:px-8 max-sm:min-h-[46vh] max-sm:px-5 max-sm:py-12"
@@ -97,7 +145,8 @@ export default function WebApp() {
             </motion.section>
 
             <motion.section
-              className="px-8 pb-24 max-lg:px-5 max-sm:px-0"
+              ref={demoRef}
+              className="px-0 pb-24"
               aria-label="Nodal demo"
               initial={shouldReduceMotion ? false : "hidden"}
               whileInView="visible"
@@ -105,95 +154,28 @@ export default function WebApp() {
               variants={fadeUp}
               transition={transition}
             >
-              <div className="rounded-2xl bg-background/50 p-4 shadow-2xl backdrop-blur-sm max-sm:rounded-xl max-sm:p-2">
-                <div className="h-[min(82vh,720px)] min-h-[560px] overflow-hidden rounded-xl border border-border bg-background shadow-xl max-sm:min-h-[620px]">
-                  <App fullHeight showNavbar={false} />
-                </div>
-              </div>
-            </motion.section>
-
-            <motion.section
-              className="px-12 pb-28 max-lg:px-8 max-sm:px-4"
-              aria-labelledby="features-heading"
-              initial={shouldReduceMotion ? false : "hidden"}
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.15 }}
-              variants={staggerChildren}
-            >
-              <motion.div className="mb-10 max-w-xl" variants={staggerChildren}>
-                <motion.p
-                  className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-primary"
-                  variants={fadeUp}
-                  transition={transition}
-                >
-                  Built for focus
-                </motion.p>
-                <motion.h2
-                  id="features-heading"
-                  className="text-3xl font-semibold tracking-tight text-foreground"
-                  variants={fadeUp}
-                  transition={transition}
-                >
-                  Everything you need to think clearly.
-                </motion.h2>
-                <motion.p
-                  className="mt-4 leading-7 text-muted-foreground"
-                  variants={fadeUp}
-                  transition={transition}
-                >
-                  A lightweight workspace that keeps organization useful and out
-                  of the way.
-                </motion.p>
-              </motion.div>
               <motion.div
-                className="grid gap-4 md:grid-cols-3"
-                variants={staggerChildren}
+                className="relative rounded-2xl p-4 max-sm:rounded-xl max-sm:p-2"
+                style={{
+                  scale: demoScale,
+                  y: demoY,
+                  // Keep scroll geometry stable while the scaled visual enters
+                  // the window; animating layout margins would move the bottom.
+                  marginBottom: shouldReduceMotion ? 0 : "-16vh",
+                  transformOrigin: "center top",
+                }}
               >
-                <motion.article
-                  className="rounded-xl border border-border bg-card/80 p-6 backdrop-blur-sm"
-                  variants={fadeUp}
-                  whileHover={shouldReduceMotion ? undefined : { y: -6 }}
-                  transition={transition}
+                <motion.div
+                  className="pointer-events-none absolute inset-0 rounded-2xl bg-background/50 shadow-2xl backdrop-blur-sm max-sm:rounded-xl"
+                  style={{ opacity: demoFrameOpacity }}
+                  aria-hidden="true"
+                />
+                <motion.div
+                  className="relative h-[calc(100vh-3.5rem)] min-h-140 overflow-hidden rounded-xl border border-border bg-background shadow-xl max-sm:min-h-155"
+                  style={{ opacity: demoOpacity }}
                 >
-                  <NotebookPen className="mb-5 size-5 text-primary" />
-                  <h3 className="font-medium text-card-foreground">
-                    Capture quickly
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Write ideas down without breaking your flow. Markdown keeps
-                    notes simple and flexible.
-                  </p>
-                </motion.article>
-                <motion.article
-                  className="rounded-xl border border-border bg-card/80 p-6 backdrop-blur-sm"
-                  variants={fadeUp}
-                  whileHover={shouldReduceMotion ? undefined : { y: -6 }}
-                  transition={transition}
-                >
-                  <FolderTree className="mb-5 size-5 text-primary" />
-                  <h3 className="font-medium text-card-foreground">
-                    Organize naturally
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Group notes into folders and categories that match the way
-                    your projects actually work.
-                  </p>
-                </motion.article>
-                <motion.article
-                  className="rounded-xl border border-border bg-card/80 p-6 backdrop-blur-sm"
-                  variants={fadeUp}
-                  whileHover={shouldReduceMotion ? undefined : { y: -6 }}
-                  transition={transition}
-                >
-                  <Search className="mb-5 size-5 text-primary" />
-                  <h3 className="font-medium text-card-foreground">
-                    Find your way back
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Keep your workspace approachable so useful thoughts are easy
-                    to revisit when you need them.
-                  </p>
-                </motion.article>
+                  <App fullHeight showNavbar={false} />
+                </motion.div>
               </motion.div>
             </motion.section>
           </main>
