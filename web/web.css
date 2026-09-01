@@ -1,7 +1,7 @@
-* {
+.web-demo {
   scrollbar-width: none;
 }
 
-*::-webkit-scrollbar {
+.web-demo::-webkit-scrollbar {
   display: none;
 }

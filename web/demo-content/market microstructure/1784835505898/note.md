@@ -1,0 +1,1 @@
+For am market maker to be notied they need to follow the mid price around

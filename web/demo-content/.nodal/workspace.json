@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "1788290389122",
+      "name": "main",
+      "collapsed": false,
+      "folderNames": [
+        "welcome",
+        "features"
+      ]
+    },
+    {
+      "id": "1788290389123",
+      "name": "misc",
+      "collapsed": false,
+      "folderNames": [
+        "market microstructure",
+        "ideas",
+        "media"
+      ]
+    }
+  ],
+  "uncategorizedFolders": []
+}

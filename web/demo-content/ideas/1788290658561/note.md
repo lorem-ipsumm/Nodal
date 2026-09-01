@@ -1,0 +1,1 @@
+This would make it much easier to fill out job applications and other kinds of forms on various sites

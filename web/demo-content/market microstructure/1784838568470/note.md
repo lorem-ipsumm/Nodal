@@ -1,0 +1,3 @@
+**Holding inventory** is the state of having an unbalanced position in an asset. For market makers, inventory is rarely a deliberate "bet" on the price going up; rather, it is the accidental byproduct of providing liquidity
+  - This can happen by having bid and ask orders open and a frantic seller hits your bids with a large amount
+  - The reality is that you've spen $X and are now exposed to the market

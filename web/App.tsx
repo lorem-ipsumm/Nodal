@@ -3,16 +3,12 @@ import {
   motion,
   useReducedMotion,
   useScroll,
-  useSpring,
   useTransform,
 } from "framer-motion";
 import App from "../src/App";
 import { createDemoApi } from "../src/lib/api/demo-api";
 import { setNodalApi } from "../src/lib/api/nodal-api";
-import {
-  SidebarCategory,
-  useSidebarStore,
-} from "../src/lib/hooks/store/use-sidebar-store";
+import { useAppStore } from "../src/lib/hooks/store/use-app-store";
 import { WebNavbar } from "./WebNavbar";
 import backgroundVideo from "../src/assets/double-flowers.mp4";
 import backgroundFallback from "../src/assets/flowers.jpg";
@@ -31,24 +27,13 @@ const staggerChildren = {
   },
 };
 
-const demoCategories: SidebarCategory[] = [
-  {
-    id: "main",
-    name: "main",
-    collapsed: false,
-    folderNames: ["weclome", "features"],
-  },
-  {
-    id: "misc",
-    name: "misc",
-    collapsed: false,
-    folderNames: ["reading list", "ideas"],
-  },
-  { id: "archive", name: "archive", collapsed: false, folderNames: [] },
-];
 
 export default function WebApp() {
   const shouldReduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    useAppStore.setState({ activeFolder: "welcome" });
+  }, []);
   const [isBackgroundVideoLoaded, setIsBackgroundVideoLoaded] = useState(false);
   const innerWindowRef = useRef<HTMLElement>(null);
   const demoRef = useRef<HTMLElement>(null);
@@ -64,38 +49,37 @@ export default function WebApp() {
     target: demoRef,
     offset: ["start end", "end end"],
   });
-  const smoothDemoProgress = useSpring(demoScrollProgress, {
-    stiffness: 90,
-    damping: 24,
-    restDelta: 0.001,
+  const { scrollYProgress: innerScrollProgress } = useScroll({
+    container: innerWindowRef,
   });
+  // Keep the visual transition synchronized with the scroll position. A spring
+  // here would continue resizing after the container reaches its scroll limit,
+  // making it appear as though another scroll is still available.
   const demoScale = useTransform(
-    smoothDemoProgress,
+    demoScrollProgress,
     [0, 1],
     shouldReduceMotion ? [1, 1] : [0.86, 1],
   );
   const demoY = useTransform(
-    smoothDemoProgress,
+    demoScrollProgress,
     [0, 1],
     shouldReduceMotion ? [0, 0] : [32, 0],
   );
-  const demoOpacity = useTransform(
-    smoothDemoProgress,
-    [0, 0.35],
-    shouldReduceMotion ? [1, 1] : [0.55, 1],
-  );
   const demoFrameOpacity = useTransform(
-    smoothDemoProgress,
-    [0, 0.75, 1],
+    innerScrollProgress,
+    [0, 0.65, 1],
     shouldReduceMotion ? [0, 0, 0] : [1, 0.25, 0],
   );
-
-  useEffect(() => {
-    useSidebarStore.setState({
-      categories: demoCategories,
-      uncategorizedFolders: [],
-    });
-  }, []);
+  const backgroundOverlayOpacity = useTransform(
+    innerScrollProgress,
+    [0, 0.8, 1],
+    [1, 0.25, 0],
+  );
+  const backgroundOverlayBlur = useTransform(
+    innerScrollProgress,
+    [0, 0.5, 1],
+    ["blur(10px)", "blur(5px)", "blur(0px)"],
+  );
 
   return (
     <div className="relative flex h-screen w-full overflow-hidden bg-sidebar py-3 pr-3 max-sm:px-3 max-sm:py-3">
@@ -103,7 +87,7 @@ export default function WebApp() {
       {/* inner window */}
       <section
         ref={innerWindowRef}
-        className="relative h-full min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-2xl border"
+        className="relative h-full min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-2xl border web-demo"
       >
         <div className="pointer-events-none sticky top-0 z-0 h-0">
           {!isBackgroundVideoLoaded && (
@@ -125,7 +109,14 @@ export default function WebApp() {
             onLoadedData={() => setIsBackgroundVideoLoaded(true)}
             aria-hidden="true"
           />
-          <div className="absolute left-0 top-0 h-[calc(100vh-1.5rem)] w-full bg-background/80 backdrop-blur-sm dark:bg-background/50 dark:backdrop-blur-sm" />
+          <motion.div
+            className="absolute left-0 top-0 h-[calc(100vh-1.5rem)] w-full bg-background/80 dark:bg-background/50"
+            style={{
+              opacity: backgroundOverlayOpacity,
+              backdropFilter: backgroundOverlayBlur,
+            }}
+            aria-hidden="true"
+          />
         </div>
         <div className="relative z-10 min-h-full">
           <main className="relative min-h-full">
@@ -177,14 +168,11 @@ export default function WebApp() {
                 }}
               >
                 <motion.div
-                  className="pointer-events-none absolute inset-0 rounded-2xl bg-background/50 shadow-2xl backdrop-blur-sm max-sm:rounded-xl"
+                  className="pointer-events-none absolute inset-0 z-0 rounded-2xl bg-background/50 shadow-2xl backdrop-blur-sm max-sm:rounded-xl"
                   style={{ opacity: demoFrameOpacity }}
                   aria-hidden="true"
                 />
-                <motion.div
-                  className="relative h-[calc(100vh-3.5rem)] min-h-140 overflow-hidden rounded-xl border border-border bg-background shadow-xl max-sm:min-h-155"
-                  style={{ opacity: demoOpacity }}
-                >
+                <motion.div className="relative z-10 h-[calc(100vh-3.5rem)] min-h-140 overflow-hidden rounded-xl border border-border bg-background shadow-xl max-sm:min-h-155">
                   <App fullHeight showNavbar={false} />
                 </motion.div>
               </motion.div>

@@ -1,0 +1,1 @@
+I used to store these in Discord, but from a privacy perspective that doesn't make much sense

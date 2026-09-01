@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { RiGithubLine } from "@remixicon/react";
 import { Button } from "../src/components/ui/button";
-import { useThemeStore } from "../src/lib/hooks/store/use-theme-store";
 import logo from "../src/assets/nodal.png";
 import {
   Dialog,
@@ -12,11 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../src/components/ui/dialog";
-import { Download, Moon, Sun } from "lucide-react";
+import { Download } from "lucide-react";
 
 export const WebNavbar = () => {
   const [downloadOpen, setDownloadOpen] = useState(false);
-  const { theme, toggleTheme } = useThemeStore();
 
   return (
     <>
@@ -45,14 +43,6 @@ export const WebNavbar = () => {
             variant="ghost"
           >
             <RiGithubLine />
-          </Button>
-          <Button
-            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
-            onClick={toggleTheme}
-            size="icon"
-            variant="ghost"
-          >
-            {theme === "light" ? <Moon /> : <Sun />}
           </Button>
         </div>
       </header>

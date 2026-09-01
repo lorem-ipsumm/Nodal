@@ -1,0 +1,1 @@
+In modern HFT risk aversion is often quantified as a Running Penalty in an objective function.

@@ -1,0 +1,1 @@
+If you're close to the mid price, you see a lot of trading

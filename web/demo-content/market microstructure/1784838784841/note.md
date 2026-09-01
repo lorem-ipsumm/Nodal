@@ -1,0 +1,3 @@
+Market makers often "skew" their quotes in order to address the inventory being held
+- If your bids have been hit and you are now exposed, you may not want to buy any more, and you need someone to sell to in order to capture the spread
+- To do this you skew your quotes. In this example, you'd skew down in order for your ask orders to be closer to the mid price, which increases your chances of off-loading that inventory risk. Also by lowering your bids you make it more unlikely that another seller will sell to you

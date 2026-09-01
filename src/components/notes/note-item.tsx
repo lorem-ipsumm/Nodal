@@ -120,9 +120,11 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
   const deleteNote = useCallback(() => {
     if (!notesDirectory || !activeFolder) return;
     const notePath = `${notesDirectory}/${activeFolder}/${note.folderName}`;
-    getNodalApi().deleteNote(notePath).then(() => {
-      removeNote(note.folderName);
-    });
+    getNodalApi()
+      .deleteNote(notePath)
+      .then(() => {
+        removeNote(note.folderName);
+      });
   }, [notesDirectory, activeFolder, note.folderName, removeNote]);
 
   const handleDelete = useCallback(
@@ -279,8 +281,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                               href={href}
                               onClick={(e) => {
                                 e.preventDefault();
-                                if (href)
-                                  getNodalApi().openExternal(href);
+                                if (href) getNodalApi().openExternal(href);
                               }}
                               data-cuelume-press="bloom"
                               className="text-primary underline underline-offset-2 hover:opacity-80 cursor-pointer break-words"
@@ -344,9 +345,9 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                       code: ({ children, className }) => {
                         const isBlock = className?.includes("language-");
                         return isBlock ? (
-                          <code className={className}>{children}</code>
+                          <code className={cn("text-base", className)}>{children}</code>
                         ) : (
-                          <code className="bg-muted text-foreground rounded px-1 py-0.5 text-xs font-mono">
+                          <code className="bg-muted text-foreground rounded px-1 py-0.5 text-md font-mono">
                             {children}
                           </code>
                         );
@@ -399,7 +400,8 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
                   note.resolvedAttachments.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {note.resolvedAttachments.map(({ fileName, dataUrl }) =>
-                        dataUrl.startsWith("data:image/") ? (
+                        dataUrl.startsWith("data:image/") ||
+                        /\.(png|jpe?g|gif|webp|svg)$/i.test(fileName) ? (
                           <Dialog key={fileName}>
                             <DialogTrigger className="cursor-zoom-in">
                               <img

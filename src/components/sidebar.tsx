@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -37,13 +37,46 @@ import { CreateFolderDialog } from "./create-folder-dialog";
 import { CreateCategoryDialog } from "./create-category-dialog";
 import { SidebarFolderItem } from "./sidebar-folder-item";
 import { SidebarCategorySection } from "./sidebar-category";
-import { getNodalApi } from "@/lib/api/nodal-api";
+import {
+  getNodalApi,
+  type WorkspaceMetadata,
+} from "@/lib/api/nodal-api";
+
+const normalizeWorkspaceMetadata = (
+  metadata: WorkspaceMetadata,
+  folderNames: string[],
+): Pick<WorkspaceMetadata, "categories" | "uncategorizedFolders"> => {
+  const availableFolders = new Set(folderNames);
+  const assignedFolders = new Set<string>();
+  const categories = metadata.categories.map((category) => ({
+    ...category,
+    folderNames: category.folderNames.filter((folder) => {
+      if (!availableFolders.has(folder) || assignedFolders.has(folder)) {
+        return false;
+      }
+      assignedFolders.add(folder);
+      return true;
+    }),
+  }));
+
+  const uncategorizedFolders = [
+    ...new Set(
+      metadata.uncategorizedFolders.filter(
+        (folder) => availableFolders.has(folder) && !assignedFolders.has(folder),
+      ),
+    ),
+    ...folderNames.filter((folder) => !assignedFolders.has(folder)),
+  ];
+
+  return { categories, uncategorizedFolders };
+};
 
 export const Sidebar = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [createCategoryOpen, setCreateCategoryOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const metadataLoaded = useRef(false);
 
   // Active drag state
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -74,35 +107,87 @@ export const Sidebar = () => {
   );
 
   useEffect(() => {
+    metadataLoaded.current = false;
     getNodalApi()
       .getWorkspace()
-      .then((workspace: string | undefined) => {
-        if (workspace) {
-          setNotesDirectory(workspace);
-          getNodalApi()
-            .getFolders(workspace)
-            .then((result: string[]) => {
-              syncFolders(result);
-              setIsLoading(false);
-            });
-        } else {
+      .then(async (workspace: string | undefined) => {
+        if (!workspace) {
           setIsLoading(false);
+          return;
         }
+
+        setNotesDirectory(workspace);
+        const [folderNames, metadata] = await Promise.all([
+          getNodalApi().getFolders(workspace),
+          getNodalApi().getWorkspaceMetadata(workspace),
+        ]);
+        if (metadata) {
+          useSidebarStore.setState(normalizeWorkspaceMetadata(metadata, folderNames));
+        } else {
+          const legacyState = (() => {
+            try {
+              const stored = localStorage.getItem("sidebar-storage");
+              if (!stored) return null;
+              const parsed = JSON.parse(stored).state;
+              if (!parsed?.categories || !parsed?.uncategorizedFolders) return null;
+              return parsed as {
+                categories: typeof categories;
+                uncategorizedFolders: typeof uncategorizedFolders;
+              };
+            } catch {
+              return null;
+            }
+          })();
+
+          if (legacyState) {
+            useSidebarStore.setState(
+              normalizeWorkspaceMetadata(
+                { version: 1, ...legacyState },
+                folderNames,
+              ),
+            );
+          } else {
+            syncFolders(folderNames);
+          }
+        }
+
+        metadataLoaded.current = true;
+        setIsLoading(false);
       });
   }, [setNotesDirectory, syncFolders]);
+
+  useEffect(() => {
+    if (!notesDirectory || !metadataLoaded.current) return;
+
+    getNodalApi().saveWorkspaceMetadata(notesDirectory, {
+      version: 1,
+      categories,
+      uncategorizedFolders,
+    });
+  }, [categories, notesDirectory, uncategorizedFolders]);
 
   const handleSelectWorkspace = () => {
     getNodalApi()
       .selectWorkspace()
       .then((selectedPath: string | null) => {
         if (selectedPath) {
+          metadataLoaded.current = false;
           setNotesDirectory(selectedPath);
           setActiveFolder(undefined);
-          getNodalApi()
-            .getFolders(selectedPath)
-            .then((result: string[]) => {
-              syncFolders(result);
-            });
+          Promise.all([
+            getNodalApi().getFolders(selectedPath),
+            getNodalApi().getWorkspaceMetadata(selectedPath),
+          ]).then(([folderNames, metadata]) => {
+            if (metadata) {
+              useSidebarStore.setState(
+                normalizeWorkspaceMetadata(metadata, folderNames),
+              );
+            } else {
+              syncFolders(folderNames);
+            }
+
+            metadataLoaded.current = true;
+          });
         }
       });
   };
@@ -221,10 +306,27 @@ export const Sidebar = () => {
       ? categories.find((c) => c.id === activeId)?.name ?? null
       : null;
 
+  // A folder belongs to one category at most. This also protects the UI from
+  // older metadata files that may contain duplicate assignments.
+  const displayedFolders = new Set<string>();
+  const displayedCategories = categories.map((category) => ({
+    ...category,
+    folderNames: category.folderNames.filter((folder) => {
+      if (displayedFolders.has(folder)) return false;
+      displayedFolders.add(folder);
+      return true;
+    }),
+  }));
+  const displayedUncategorizedFolders = uncategorizedFolders.filter((folder) => {
+    if (displayedFolders.has(folder)) return false;
+    displayedFolders.add(folder);
+    return true;
+  });
+
   // All category ids and uncategorized folder names for top-level sortable
   const topLevelIds = [
-    ...categories.map((c) => c.id),
-    ...uncategorizedFolders,
+    ...displayedCategories.map((c) => c.id),
+    ...displayedUncategorizedFolders,
   ];
 
   return (
@@ -327,7 +429,7 @@ export const Sidebar = () => {
                   items={topLevelIds}
                   strategy={verticalListSortingStrategy}
                 >
-                  {categories.map((category) => (
+                  {displayedCategories.map((category) => (
                     <SidebarCategorySection
                       key={category.id}
                       category={category}
@@ -337,7 +439,7 @@ export const Sidebar = () => {
                   ))}
 
                   {/* Uncategorized folders */}
-                  {uncategorizedFolders.map((folder) => (
+                  {displayedUncategorizedFolders.map((folder) => (
                     <SidebarFolderItem
                       key={folder}
                       folder={folder}

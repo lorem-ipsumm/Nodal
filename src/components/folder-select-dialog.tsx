@@ -6,6 +6,7 @@ import { CreateFolderDialog } from "./create-folder-dialog";
 
 import { FolderContextMenu } from "./folder-context-menu";
 import { getNodalApi } from "@/lib/api/nodal-api";
+import { Button } from "./ui/button";
 
 interface FolderSelectDialogProps {
   open: boolean;
@@ -97,10 +98,11 @@ export const FolderSelectDialog = ({
                     onFolderDeleted?.(name);
                   }}
                 >
-                  <button
+                  <Button
                     onClick={(e) => handleSelect(folder, e)}
+                    variant={"ghost"}
                     className={cn(
-                      "w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors hover:bg-accent",
+                      "w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors justify-start rounded-none",
                       folder === activeFolder &&
                         "bg-accent text-accent-foreground font-medium",
                     )}
@@ -111,7 +113,7 @@ export const FolderSelectDialog = ({
                       className="flex-shrink-0 text-muted-foreground"
                     />
                     {folder}
-                  </button>
+                  </Button>
                 </FolderContextMenu>
               ))
             )}

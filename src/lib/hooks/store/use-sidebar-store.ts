@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
 export interface SidebarCategory {
   id: string;
@@ -30,9 +29,7 @@ interface SidebarStore {
 let nextId = Date.now();
 const genId = () => String(nextId++);
 
-export const useSidebarStore = create<SidebarStore>()(
-  persist(
-    (set) => ({
+export const useSidebarStore = create<SidebarStore>()((set) => ({
       categories: [],
       uncategorizedFolders: [],
 
@@ -141,9 +138,4 @@ export const useSidebarStore = create<SidebarStore>()(
             uncategorizedFolders: [...newUncategorized, ...newFolders],
           };
         }),
-    }),
-    {
-      name: "sidebar-storage",
-    },
-  ),
-);
+}));

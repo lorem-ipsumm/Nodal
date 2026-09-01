@@ -1,0 +1,5 @@
+Adverse Selection
+- Occurs when a market market trades with an informed counterparty who knows teh future price direction. The imformed traders buys right before prices rise and sells before they fall, causing the market maker to lose. The bid-ask spread exists primarily to compensate market makers for this exact risk.
+- When trading with uninofmred traders, the market maker captures the spread (buying at bid, selling at ask) while the mid-price statys stable, generating profit.
+- When trading with informed traders, the mid-price moves against them immediately after the trader causing a loss.
+- The spread compensates for this because the profits from uninformed flow must exceed the losses from informed flow. If adverse selection risk increases, the MM must widen the spread to remain profitable.

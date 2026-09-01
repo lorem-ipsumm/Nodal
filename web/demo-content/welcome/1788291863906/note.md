@@ -1,0 +1,1 @@
+So Nodal was created as an app that works best with my workflow and thinking style

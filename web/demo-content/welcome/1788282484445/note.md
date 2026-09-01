@@ -1,1 +1,1 @@
-Capture thoughts as they happen, then organize them when you are ready.
+Capture thoughts as they happen, have them auto-timestamped and organized with similar notes/thoughts

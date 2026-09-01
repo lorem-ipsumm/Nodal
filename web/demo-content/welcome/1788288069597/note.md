@@ -1,0 +1,1 @@
+This is a live demo workspace that you can play around in to get a feel for the app. Feel free to click around, create new folders, categories, and notes

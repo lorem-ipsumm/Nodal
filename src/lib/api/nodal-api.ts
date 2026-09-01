@@ -11,6 +11,17 @@ export type PaginatedNotes = {
   hasMore: boolean;
 };
 
+export type WorkspaceMetadata = {
+  version: 1;
+  categories: {
+    id: string;
+    name: string;
+    collapsed: boolean;
+    folderNames: string[];
+  }[];
+  uncategorizedFolders: string[];
+};
+
 export type OgData = {
   title: string | null;
   description: string | null;
@@ -25,6 +36,11 @@ export type NodalApi = {
   unpinNote: (folderName: string) => Promise<PinnedNote[]>;
   getWorkspace: () => Promise<string | undefined>;
   selectWorkspace: () => Promise<string | null>;
+  getWorkspaceMetadata: (workspace: string) => Promise<WorkspaceMetadata | null>;
+  saveWorkspaceMetadata: (
+    workspace: string,
+    metadata: WorkspaceMetadata,
+  ) => Promise<void>;
   getFolders: (dirPath?: string) => Promise<string[]>;
   createFolder: (folderPath: string) => Promise<void>;
   deleteFolder: (folderPath: string) => Promise<void>;
@@ -74,6 +90,10 @@ export const createElectronApi = (ipcRenderer: IpcRenderer): NodalApi => ({
   unpinNote: (folderName) => invoke(ipcRenderer, "unpin-note", folderName),
   getWorkspace: () => invoke(ipcRenderer, "get-workspace"),
   selectWorkspace: () => invoke(ipcRenderer, "select-workspace"),
+  getWorkspaceMetadata: (workspace) =>
+    invoke(ipcRenderer, "get-workspace-metadata", workspace),
+  saveWorkspaceMetadata: (workspace, metadata) =>
+    invoke(ipcRenderer, "save-workspace-metadata", workspace, metadata),
   getFolders: (dirPath) => invoke(ipcRenderer, "get-folders", dirPath),
   createFolder: (folderPath) => invoke(ipcRenderer, "create-folder", folderPath),
   deleteFolder: (folderPath) => invoke(ipcRenderer, "delete-folder", folderPath),

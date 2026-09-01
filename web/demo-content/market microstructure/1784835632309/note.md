@@ -1,0 +1,1 @@
+and if you're close to the mid you will trade more often but will make less per trade

@@ -1,0 +1,1 @@
+If you're orders are far away from the mid, you'll make more money per trade but will trade less

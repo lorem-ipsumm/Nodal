@@ -177,11 +177,42 @@ ipcMain.handle("select-workspace", async () => {
   return selectedPath;
 });
 
+const workspaceMetadataPath = (workspace: string) =>
+  path.join(workspace, ".nodal", "workspace.json");
+
+ipcMain.handle("get-workspace-metadata", (_event, workspace: string) => {
+  const metadataPath = workspaceMetadataPath(workspace);
+  if (!fs.existsSync(metadataPath)) return null;
+
+  try {
+    return JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
+  } catch {
+    return null;
+  }
+});
+
+ipcMain.handle(
+  "save-workspace-metadata",
+  (_event, workspace: string, metadata: unknown) => {
+    const metadataDirectory = path.join(workspace, ".nodal");
+    const metadataPath = workspaceMetadataPath(workspace);
+    const temporaryPath = `${metadataPath}.tmp`;
+    fs.mkdirSync(metadataDirectory, { recursive: true });
+    fs.writeFileSync(temporaryPath, JSON.stringify(metadata, null, 2), "utf-8");
+    fs.renameSync(temporaryPath, metadataPath);
+  },
+);
+
 ipcMain.handle("get-folders", (_event, dirPath?: string) => {
   const targetPath = dirPath ?? app.getPath("desktop");
   const entries = fs.readdirSync(targetPath, { withFileTypes: true });
   return entries
-    .filter((entry) => entry.isDirectory() && entry.name !== ".stfolder")
+    .filter(
+      (entry) =>
+        entry.isDirectory() &&
+        entry.name !== ".stfolder" &&
+        entry.name !== ".nodal",
+    )
     .map((entry) => entry.name);
 });
 

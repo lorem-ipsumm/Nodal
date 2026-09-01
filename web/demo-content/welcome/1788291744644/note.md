@@ -1,0 +1,1 @@
+The reason I built this is because while apps like Obsidian are great for longer form note taking, I like to think it short burts and write down quick thoughts

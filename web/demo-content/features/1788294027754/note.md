@@ -1,0 +1,1 @@
+Your standard text formatting is also available

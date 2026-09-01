@@ -1,0 +1,1 @@
+In tradfi markets hte bid-ask spread tends to get tighter toward the end of the day in order to maximize the chance of getting out of trades (as to not carry trades overnight)

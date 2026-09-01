@@ -1,0 +1,19 @@
+Anime I like:
+- Vivy: Florte Eye's Song
+- Steins;Gate
+- Monster
+- Psycho-Pass
+- Pluto
+- Orb
+- Monster
+- Death note
+- 86
+- Code Geass
+- Shinsekai Yori
+- Vinland Saga
+- Aot
+- Heavenly Delusion
+- Terror in Resonance
+- Paranoia Agent
+- Re:Zero
+- Cyberpunk: Edgerunners
