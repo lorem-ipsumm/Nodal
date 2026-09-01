@@ -31,6 +31,7 @@
     "cuelume": "^0.1.2",
     "electron-store": "^11.0.2",
     "electron-updater": "^6.6.2",
+    "framer-motion": "^13.1.1",
     "lucide-react": "^1.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
