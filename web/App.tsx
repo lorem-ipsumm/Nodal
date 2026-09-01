@@ -7,7 +7,7 @@ import {
   useSidebarStore,
 } from "../src/lib/hooks/store/use-sidebar-store";
 import { WebNavbar } from "./WebNavbar";
-import backgroundImage from "../src/assets/background.jpg";
+import backgroundImage from "../src/assets/background-dithered.jpg";
 
 setNodalApi(createDemoApi());
 
@@ -36,17 +36,17 @@ export default function WebApp() {
   }, []);
 
   return (
-    <div
-      className="relative h-screen w-screen overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: `url(${backgroundImage})` }}
-    >
-      <div className="absolute inset-0 bg-background/40 backdrop-blur-sm" />
-      <div className="relative mx-auto flex h-full w-full max-w-[90vw] flex-col px-6 pb-6 max-sm:px-3 max-sm:py-3">
-        <WebNavbar />
-        <section className="mt-3 h-full min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-background shadow-2xl">
+    <div className="relative mx-auto flex w-full pr-3 py-3 max-sm:px-3 max-sm:py-3 h-screen">
+      <WebNavbar />
+      <section
+        className="h-full min-h-0 flex-1 overflow-hidden bg-background p-10 rounded-2xl bg-cover"
+        style={{ backgroundImage: `url(${backgroundImage})` }}
+      >
+        {/*<div className="absolute inset-0 bg-background/70 backdrop-blur-sm " />*/}
+        <div className="w-full h-full rounded-xl overflow-hidden border shadow-2xl z-[10]">
           <App fullHeight showNavbar={false} />
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }

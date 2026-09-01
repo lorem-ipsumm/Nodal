@@ -11,18 +11,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../src/components/ui/dialog";
+import { Download } from "lucide-react";
 
 export const WebNavbar = () => {
   const [downloadOpen, setDownloadOpen] = useState(false);
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between px-0">
+      <header className="flex flex-col shrink-0 items-center justify-between px-4 h-full">
         <div className="flex items-center gap-2 text-base font-semibold tracking-tight text-foreground">
-          <img src={logo} alt="" className="size-7 rounded-md" />
-          <span>Nodal</span>
+          <img src={logo} alt="" className="size-8 rounded-md" />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-col">
           <Button
             aria-label="View Nodal on GitHub"
             render={
@@ -37,8 +37,8 @@ export const WebNavbar = () => {
           >
             <RiGithubLine />
           </Button>
-          <Button onClick={() => setDownloadOpen(true)} size="default">
-            Get Nodal
+          <Button onClick={() => setDownloadOpen(true)} size="icon">
+            <Download />
           </Button>
         </div>
       </header>
@@ -53,7 +53,9 @@ export const WebNavbar = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>Close</DialogClose>
+            <DialogClose render={<Button variant="outline" />}>
+              Close
+            </DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
