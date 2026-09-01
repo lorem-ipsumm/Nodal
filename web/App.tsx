@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   motion,
   useReducedMotion,
@@ -15,6 +15,7 @@ import {
 } from "../src/lib/hooks/store/use-sidebar-store";
 import { WebNavbar } from "./WebNavbar";
 import backgroundVideo from "../src/assets/double-flowers.mp4";
+import backgroundFallback from "../src/assets/flowers.jpg";
 
 setNodalApi(createDemoApi());
 
@@ -48,6 +49,7 @@ const demoCategories: SidebarCategory[] = [
 
 export default function WebApp() {
   const shouldReduceMotion = useReducedMotion();
+  const [isBackgroundVideoLoaded, setIsBackgroundVideoLoaded] = useState(false);
   const innerWindowRef = useRef<HTMLElement>(null);
   const demoRef = useRef<HTMLElement>(null);
 
@@ -104,6 +106,14 @@ export default function WebApp() {
         className="relative h-full min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-2xl border"
       >
         <div className="pointer-events-none sticky top-0 z-0 h-0">
+          {!isBackgroundVideoLoaded && (
+            <img
+              className="absolute left-0 top-0 h-[calc(100vh-1.5rem)] w-full scale-105 object-cover"
+              src={backgroundFallback}
+              alt=""
+              aria-hidden="true"
+            />
+          )}
           <video
             className="absolute left-0 top-0 h-[calc(100vh-1.5rem)] w-full scale-105 object-cover"
             src={backgroundVideo}
@@ -111,6 +121,8 @@ export default function WebApp() {
             loop
             muted
             playsInline
+            preload="auto"
+            onLoadedData={() => setIsBackgroundVideoLoaded(true)}
             aria-hidden="true"
           />
           <div className="absolute left-0 top-0 h-[calc(100vh-1.5rem)] w-full bg-background/80 backdrop-blur-sm dark:bg-background/50 dark:backdrop-blur-sm" />
