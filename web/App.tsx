@@ -46,12 +46,9 @@ export default function WebApp() {
           className="relative min-h-full  bg-center"
           style={{ backgroundImage: `url(${backgroundImage})` }}
         >
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm dark:backdrop-blur-lg" />
+          <div className="absolute inset-0 dark:bg-background/90 bg-background/80 backdrop-blur-sm dark:backdrop-blur-lg" />
           <main className="relative min-h-full">
           <section className="flex min-h-[48vh] flex-col justify-center px-12 py-16 max-lg:px-8 max-sm:min-h-[46vh] max-sm:px-5 max-sm:py-12">
-            <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-primary">
-              A calmer workspace
-            </p>
             <h1 className="max-w-3xl text-5xl font-semibold tracking-tight text-foreground max-lg:text-4xl max-sm:text-3xl">
               Keep your thoughts close and your workspace quiet.
             </h1>
@@ -71,7 +68,7 @@ export default function WebApp() {
 
           <section className="px-12 pb-28 max-lg:px-8 max-sm:px-4" aria-labelledby="features-heading">
             <div className="mb-10 max-w-xl">
-              <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-primary">
+              <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-primary">
                 Built for focus
               </p>
               <h2 id="features-heading" className="text-3xl font-semibold tracking-tight text-foreground">
