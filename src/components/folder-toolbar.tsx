@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
 import type { PinnedNote } from "@/lib/types";
 import { Folder, ChevronDown, Pin, StickyNote, X } from "lucide-react";
-import { Input } from "./ui/input";
 import { cn } from "@/lib/utils";
 import { ConfirmationDialog } from "./ui/confirmation-dialog";
 import { Dialog } from "./ui/dialog";
@@ -47,7 +46,7 @@ export const FolderToolbar = () => {
 
   return (
     <>
-      <section className="h-12 border-b flex items-center px-3 w-full justify-between">
+      <section className="h-12 border-b flex items-center pl-3 pr-2 w-full justify-between">
         <Button
           onClick={() => notesDirectory && setOpen(true)}
           disabled={!notesDirectory}
@@ -73,7 +72,7 @@ export const FolderToolbar = () => {
             >
               <Button variant={"outline"}>
                 <Pin
-                  size={18}
+                  size={10}
                   className={cn(
                     "rotate-12",
                     pinnedNotes.length > 0 && "fill-current",
@@ -118,7 +117,7 @@ export const FolderToolbar = () => {
                       type="button"
                       aria-label={`Remove ${pin.contentPreview || "pinned note"} from pinned notes`}
                       title="Remove pinned note"
-                      className="absolute right-2 top-1/2 hidden size-6 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-hover:flex"
+                      className="absolute right-2 top-1/2 hidden size-6 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:bg-destructive/10! hover:text-destructive! group-hover:flex cursor-pointer"
                       onClick={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
@@ -132,7 +131,7 @@ export const FolderToolbar = () => {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Input placeholder={`Search ${activeFolder ?? ""}`} />
+          {/*<Input placeholder={`Search ${activeFolder ?? ""}`} />*/}
         </section>
       </section>
 

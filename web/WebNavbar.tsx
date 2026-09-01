@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   RiAppleLine,
   RiGithubLine,
-  RiUbuntuLine,
   RiWindowsLine,
 } from "@remixicon/react";
 import { Button } from "../src/components/ui/button";
@@ -15,6 +14,7 @@ import {
   DialogTitle,
 } from "../src/components/ui/dialog";
 import { Download } from "lucide-react";
+import TuxIcon from "@/assets/TuxIcon";
 
 type OperatingSystem = "macOS" | "Windows" | "Linux";
 
@@ -28,7 +28,7 @@ const getOperatingSystem = (): OperatingSystem => {
 const osIcons = {
   macOS: RiAppleLine,
   Windows: RiWindowsLine,
-  Linux: RiUbuntuLine,
+  Linux: TuxIcon,
 };
 
 export const WebNavbar = () => {
