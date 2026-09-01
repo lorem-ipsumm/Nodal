@@ -8,7 +8,7 @@ import {
   useSidebarStore,
 } from "../src/lib/hooks/store/use-sidebar-store";
 import { WebNavbar } from "./WebNavbar";
-import backgroundImage from "../src/assets/mountain.jpg";
+import backgroundVideo from "../src/assets/double-flowers.mp4";
 import { FolderTree, NotebookPen, Search } from "lucide-react";
 
 setNodalApi(createDemoApi());
@@ -58,11 +58,17 @@ export default function WebApp() {
     <div className="relative flex h-screen w-full overflow-hidden bg-sidebar py-3 pr-3 max-sm:px-3 max-sm:py-3">
       <WebNavbar />
       <section className="relative h-full min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-2xl border">
-        <div
-          className="relative min-h-full bg-center"
-          style={{ backgroundImage: `url(${backgroundImage})` }}
-        >
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm dark:bg-background/90 dark:backdrop-blur-lg" />
+        <div className="relative min-h-full">
+          <video
+            className="pointer-events-none absolute inset-0 h-full w-full scale-105 object-cover"
+            src={backgroundVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            aria-hidden="true"
+          />
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm dark:bg-background/50 dark:backdrop-blur-sm" />
           <main className="relative min-h-full">
             <motion.section
               className="flex min-h-[48vh] flex-col justify-center px-12 py-16 max-lg:px-8 max-sm:min-h-[46vh] max-sm:px-5 max-sm:py-12"
@@ -99,8 +105,8 @@ export default function WebApp() {
               variants={fadeUp}
               transition={transition}
             >
-              <div className="rounded-2xl bg-transparent p-4 shadow-2xl backdrop-blur-sm max-sm:rounded-xl max-sm:p-2">
-                <div className="h-[min(72vh,720px)] min-h-[560px] overflow-hidden rounded-xl border border-border bg-background shadow-xl max-sm:min-h-[620px]">
+              <div className="rounded-2xl bg-background/50 p-4 shadow-2xl backdrop-blur-sm max-sm:rounded-xl max-sm:p-2">
+                <div className="h-[min(82vh,720px)] min-h-[560px] overflow-hidden rounded-xl border border-border bg-background shadow-xl max-sm:min-h-[620px]">
                   <App fullHeight showNavbar={false} />
                 </div>
               </div>
