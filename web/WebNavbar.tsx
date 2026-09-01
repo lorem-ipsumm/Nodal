@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { RiGithubLine } from "@remixicon/react";
 import { Button } from "../src/components/ui/button";
+import { useThemeStore } from "../src/lib/hooks/store/use-theme-store";
 import logo from "../src/assets/nodal.png";
 import {
   Dialog,
@@ -11,18 +12,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../src/components/ui/dialog";
-import { Download } from "lucide-react";
+import { Download, Moon, Sun } from "lucide-react";
 
 export const WebNavbar = () => {
   const [downloadOpen, setDownloadOpen] = useState(false);
+  const { theme, toggleTheme } = useThemeStore();
 
   return (
     <>
       <header className="flex flex-col shrink-0 items-center justify-between px-4 h-full">
-        <div className="flex items-center gap-2 text-base font-semibold tracking-tight text-foreground">
-          <img src={logo} alt="" className="size-8 rounded-md" />
+        <div className="flex flex-col items-center gap-3 text-base font-semibold tracking-tight text-foreground">
+          <img src={logo} alt="Nodal logo" className="size-8 rounded-md" />
+          <Button
+            aria-label="Download Nodal"
+            onClick={() => setDownloadOpen(true)}
+            size="icon"
+          >
+            <Download />
+          </Button>
         </div>
-        <div className="flex items-center gap-2 flex-col">
+        <div className="flex flex-col items-center gap-2">
           <Button
             aria-label="View Nodal on GitHub"
             render={
@@ -37,8 +46,13 @@ export const WebNavbar = () => {
           >
             <RiGithubLine />
           </Button>
-          <Button onClick={() => setDownloadOpen(true)} size="icon">
-            <Download />
+          <Button
+            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+            onClick={toggleTheme}
+            size="icon"
+            variant="ghost"
+          >
+            {theme === "light" ? <Moon /> : <Sun />}
           </Button>
         </div>
       </header>
