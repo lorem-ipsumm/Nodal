@@ -11,8 +11,11 @@ export type PaginatedNotes = {
   hasMore: boolean;
 };
 
+export type WindowFrameStyle = "hidden" | "nodal" | "native";
+
 export type WorkspaceMetadata = {
   version: 1;
+  pinnedNotes?: PinnedNote[];
   categories: {
     id: string;
     name: string;
@@ -34,6 +37,9 @@ export type NodalApi = {
   getPinnedNotes: () => Promise<PinnedNote[]>;
   pinNote: (note: PinnedNote) => Promise<PinnedNote[]>;
   unpinNote: (folderName: string) => Promise<PinnedNote[]>;
+  getAppVersion: () => Promise<string>;
+  getWindowFrameStyle: () => Promise<WindowFrameStyle>;
+  setWindowFrameStyle: (style: WindowFrameStyle) => Promise<void>;
   getWorkspace: () => Promise<string | undefined>;
   selectWorkspace: () => Promise<string | null>;
   getWorkspaceMetadata: (workspace: string) => Promise<WorkspaceMetadata | null>;
@@ -88,6 +94,10 @@ export const createElectronApi = (ipcRenderer: IpcRenderer): NodalApi => ({
   getPinnedNotes: () => invoke(ipcRenderer, "get-pinned-notes"),
   pinNote: (note) => invoke(ipcRenderer, "pin-note", note),
   unpinNote: (folderName) => invoke(ipcRenderer, "unpin-note", folderName),
+  getAppVersion: () => invoke(ipcRenderer, "get-app-version"),
+  getWindowFrameStyle: () => invoke(ipcRenderer, "get-window-frame-style"),
+  setWindowFrameStyle: (style) =>
+    invoke(ipcRenderer, "set-window-frame-style", style),
   getWorkspace: () => invoke(ipcRenderer, "get-workspace"),
   selectWorkspace: () => invoke(ipcRenderer, "select-workspace"),
   getWorkspaceMetadata: (workspace) =>

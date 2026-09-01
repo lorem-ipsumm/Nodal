@@ -42,7 +42,7 @@ export const SidebarCategorySection = ({
         <div
           {...attributes}
           {...listeners}
-          className="flex items-center gap-1 px-1 py-0.5 rounded cursor-grab active:cursor-grabbing hover:bg-accent select-none mb-1.5"
+          className="flex items-center gap-1 px-1 py-1 rounded cursor-grab active:cursor-grabbing hover:bg-accent select-none mb-1"
           onClick={() => toggleCategory(category.id)}
         >
           <ChevronRightIcon

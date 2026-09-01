@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
-import { Folder, ChevronDown, Pin, StickyNote } from "lucide-react";
+import type { PinnedNote } from "@/lib/types";
+import { Folder, ChevronDown, Pin, StickyNote, X } from "lucide-react";
 import { Input } from "./ui/input";
 import { cn } from "@/lib/utils";
+import { ConfirmationDialog } from "./ui/confirmation-dialog";
+import { Dialog } from "./ui/dialog";
 import { FolderSelectDialog } from "./folder-select-dialog";
 import { Button } from "./ui/button";
 import {
@@ -21,9 +24,12 @@ export const FolderToolbar = () => {
     notesDirectory,
     setActiveFolder,
     pinnedNotes,
+    unpinNote,
     setScrollToNoteId,
+    setHighlightedNoteId,
   } = useAppStore();
   const [open, setOpen] = useState(false);
+  const [pinToRemove, setPinToRemove] = useState<PinnedNote | null>(null);
 
   const handleSelect = (folder: string) => {
     setActiveFolder(folder);
@@ -32,6 +38,8 @@ export const FolderToolbar = () => {
 
   const handlePinnedNoteClick = (folderName: string, folder: string) => {
     setScrollToNoteId(folderName);
+    setHighlightedNoteId(folderName);
+    window.setTimeout(() => setHighlightedNoteId(undefined), 5000);
     if (folder !== activeFolder) {
       setActiveFolder(folder);
     }
@@ -88,11 +96,11 @@ export const FolderToolbar = () => {
               ) : (
                 pinnedNotes.map((pin) => (
                   <DropdownMenuItem
-                    key={pin.folderName}
+                    key={`${pin.folder}/${pin.folderName}`}
                     onClick={() =>
                       handlePinnedNoteClick(pin.folderName, pin.folder)
                     }
-                    className="flex flex-col items-start gap-0.5 cursor-pointer"
+                    className="group flex flex-col items-start gap-0.5 cursor-pointer pr-10"
                   >
                     <div className="flex items-center gap-2 w-full">
                       <StickyNote
@@ -106,6 +114,19 @@ export const FolderToolbar = () => {
                     <span className="text-sm truncate w-full pl-5">
                       {pin.contentPreview || "Empty note"}
                     </span>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${pin.contentPreview || "pinned note"} from pinned notes`}
+                      title="Remove pinned note"
+                      className="absolute right-2 top-1/2 hidden size-6 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-hover:flex"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setPinToRemove(pin);
+                      }}
+                    >
+                      <X className="size-4" />
+                    </button>
                   </DropdownMenuItem>
                 ))
               )}
@@ -122,6 +143,24 @@ export const FolderToolbar = () => {
         activeFolder={activeFolder}
         onSelect={handleSelect}
       />
+
+      <Dialog
+        open={pinToRemove !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setPinToRemove(null);
+        }}
+      >
+        {pinToRemove && (
+          <ConfirmationDialog
+            title="Remove pinned note?"
+            description="This will remove the note from your pinned notes. The note itself will not be deleted."
+            action={() => {
+              void unpinNote(pinToRemove.folderName);
+              setPinToRemove(null);
+            }}
+          />
+        )}
+      </Dialog>
     </>
   );
 };

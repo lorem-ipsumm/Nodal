@@ -28,6 +28,8 @@ interface AppStore {
   unpinNote: (folderName: string) => Promise<void>;
   scrollToNoteId: string | undefined;
   setScrollToNoteId: (id: string | undefined) => void;
+  highlightedNoteId: string | undefined;
+  setHighlightedNoteId: (id: string | undefined) => void;
 }
 
 export const useAppStore = create<AppStore>()(
@@ -80,6 +82,9 @@ export const useAppStore = create<AppStore>()(
       scrollToNoteId: undefined,
       setScrollToNoteId: (id: string | undefined) =>
         set({ scrollToNoteId: id }),
+      highlightedNoteId: undefined,
+      setHighlightedNoteId: (id: string | undefined) =>
+        set({ highlightedNoteId: id }),
     }),
     {
       name: "app-storage",

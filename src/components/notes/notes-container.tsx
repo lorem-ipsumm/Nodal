@@ -184,6 +184,12 @@ export const NotesContainer = () => {
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
         setScrollToNoteId(undefined);
+      } else if (hasMore && !isLoadingMore) {
+        // Pinned notes can be older than the first page. Keep loading history
+        // until the target is rendered, then the next effect scrolls to it.
+        void loadMore();
+      } else if (!hasMore && !isLoadingMore) {
+        setScrollToNoteId(undefined);
       }
     } else if (shouldScrollToBottom.current) {
       scrollToBottom();
@@ -191,7 +197,15 @@ export const NotesContainer = () => {
     } else if (isNearBottom()) {
       scrollToBottom();
     }
-  }, [notes, isLoading, scrollToNoteId, setScrollToNoteId]);
+  }, [
+    hasMore,
+    isLoading,
+    isLoadingMore,
+    loadMore,
+    notes,
+    scrollToNoteId,
+    setScrollToNoteId,
+  ]);
 
   return (
     <section

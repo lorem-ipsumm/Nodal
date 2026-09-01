@@ -25,6 +25,7 @@ import {
   MoonIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
+  Settings,
   SunIcon,
   Volume2,
   VolumeOff,
@@ -37,10 +38,8 @@ import { CreateFolderDialog } from "./create-folder-dialog";
 import { CreateCategoryDialog } from "./create-category-dialog";
 import { SidebarFolderItem } from "./sidebar-folder-item";
 import { SidebarCategorySection } from "./sidebar-category";
-import {
-  getNodalApi,
-  type WorkspaceMetadata,
-} from "@/lib/api/nodal-api";
+import { SettingsDialog } from "./settings-dialog";
+import { getNodalApi, type WorkspaceMetadata } from "@/lib/api/nodal-api";
 
 const normalizeWorkspaceMetadata = (
   metadata: WorkspaceMetadata,
@@ -62,7 +61,8 @@ const normalizeWorkspaceMetadata = (
   const uncategorizedFolders = [
     ...new Set(
       metadata.uncategorizedFolders.filter(
-        (folder) => availableFolders.has(folder) && !assignedFolders.has(folder),
+        (folder) =>
+          availableFolders.has(folder) && !assignedFolders.has(folder),
       ),
     ),
     ...folderNames.filter((folder) => !assignedFolders.has(folder)),
@@ -76,16 +76,20 @@ export const Sidebar = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [createCategoryOpen, setCreateCategoryOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const metadataLoaded = useRef(false);
 
   // Active drag state
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeDragType, setActiveDragType] = useState<"folder" | "category" | null>(null);
+  const [activeDragType, setActiveDragType] = useState<
+    "folder" | "category" | null
+  >(null);
 
   const {
     notesDirectory,
     setNotesDirectory,
     setActiveFolder,
+    loadPinnedNotes,
     toggleSounds,
     soundsEnabled,
   } = useAppStore();
@@ -122,14 +126,17 @@ export const Sidebar = () => {
           getNodalApi().getWorkspaceMetadata(workspace),
         ]);
         if (metadata) {
-          useSidebarStore.setState(normalizeWorkspaceMetadata(metadata, folderNames));
+          useSidebarStore.setState(
+            normalizeWorkspaceMetadata(metadata, folderNames),
+          );
         } else {
           const legacyState = (() => {
             try {
               const stored = localStorage.getItem("sidebar-storage");
               if (!stored) return null;
               const parsed = JSON.parse(stored).state;
-              if (!parsed?.categories || !parsed?.uncategorizedFolders) return null;
+              if (!parsed?.categories || !parsed?.uncategorizedFolders)
+                return null;
               return parsed as {
                 categories: typeof categories;
                 uncategorizedFolders: typeof uncategorizedFolders;
@@ -152,9 +159,10 @@ export const Sidebar = () => {
         }
 
         metadataLoaded.current = true;
+        void loadPinnedNotes();
         setIsLoading(false);
       });
-  }, [setNotesDirectory, syncFolders]);
+  }, [loadPinnedNotes, setNotesDirectory, syncFolders]);
 
   useEffect(() => {
     if (!notesDirectory || !metadataLoaded.current) return;
@@ -187,6 +195,7 @@ export const Sidebar = () => {
             }
 
             metadataLoaded.current = true;
+            void loadPinnedNotes();
           });
         }
       });
@@ -211,9 +220,10 @@ export const Sidebar = () => {
 
   const handleFolderDeleted = (name: string) => {
     syncFolders(
-      [...uncategorizedFolders, ...categories.flatMap((c) => c.folderNames)].filter(
-        (f) => f !== name,
-      ),
+      [
+        ...uncategorizedFolders,
+        ...categories.flatMap((c) => c.folderNames),
+      ].filter((f) => f !== name),
     );
   };
 
@@ -285,7 +295,10 @@ export const Sidebar = () => {
       const oldIdx = uncategorizedFolders.indexOf(activeIdStr);
       const newIdx = uncategorizedFolders.indexOf(overIdStr);
       if (oldIdx !== -1 && newIdx !== -1) {
-        reorderFoldersInCategory(null, arrayMove(uncategorizedFolders, oldIdx, newIdx));
+        reorderFoldersInCategory(
+          null,
+          arrayMove(uncategorizedFolders, oldIdx, newIdx),
+        );
       }
     } else {
       const cat = categories.find((c) => c.id === catId);
@@ -293,7 +306,10 @@ export const Sidebar = () => {
       const oldIdx = cat.folderNames.indexOf(activeIdStr);
       const newIdx = cat.folderNames.indexOf(overIdStr);
       if (oldIdx !== -1 && newIdx !== -1) {
-        reorderFoldersInCategory(catId, arrayMove(cat.folderNames, oldIdx, newIdx));
+        reorderFoldersInCategory(
+          catId,
+          arrayMove(cat.folderNames, oldIdx, newIdx),
+        );
       }
     }
   };
@@ -303,7 +319,7 @@ export const Sidebar = () => {
     activeDragType === "folder" && activeId ? activeId : null;
   const activeCategoryName =
     activeDragType === "category" && activeId
-      ? categories.find((c) => c.id === activeId)?.name ?? null
+      ? (categories.find((c) => c.id === activeId)?.name ?? null)
       : null;
 
   // A folder belongs to one category at most. This also protects the UI from
@@ -317,11 +333,13 @@ export const Sidebar = () => {
       return true;
     }),
   }));
-  const displayedUncategorizedFolders = uncategorizedFolders.filter((folder) => {
-    if (displayedFolders.has(folder)) return false;
-    displayedFolders.add(folder);
-    return true;
-  });
+  const displayedUncategorizedFolders = uncategorizedFolders.filter(
+    (folder) => {
+      if (displayedFolders.has(folder)) return false;
+      displayedFolders.add(folder);
+      return true;
+    },
+  );
 
   // All category ids and uncategorized folder names for top-level sortable
   const topLevelIds = [
@@ -478,7 +496,13 @@ export const Sidebar = () => {
       <CreateFolderDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreated={(name) => syncFolders([...uncategorizedFolders, ...categories.flatMap((c) => c.folderNames), name])}
+        onCreated={(name) =>
+          syncFolders([
+            ...uncategorizedFolders,
+            ...categories.flatMap((c) => c.folderNames),
+            name,
+          ])
+        }
       />
 
       {/* Footer */}
@@ -488,27 +512,45 @@ export const Sidebar = () => {
           !collapsed ? "" : "pt-2 pb-1 flex-col",
         )}
       >
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          data-cuelume-press="toggle"
-        >
-          {theme === "light" ? <MoonIcon size={14} /> : <SunIcon size={14} />}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSounds}
-          data-cuelume-press="toggle"
-        >
-          {soundsEnabled === true ? (
-            <VolumeOff size={14} />
-          ) : (
-            <Volume2 size={14} />
+        <div
+          className={cn(
+            "flex items-center gap-1",
+            !collapsed ? "" : "pt-0 pb-1 flex-col",
           )}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            data-cuelume-press="toggle"
+          >
+            {theme === "light" ? <MoonIcon size={14} /> : <SunIcon size={14} />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSounds}
+            data-cuelume-press="toggle"
+          >
+            {soundsEnabled === true ? (
+              <VolumeOff size={14} />
+            ) : (
+              <Volume2 size={14} />
+            )}
+          </Button>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setSettingsOpen(true)}
+          title="Settings"
+          aria-label="Settings"
+        >
+          <Settings size={14} />
         </Button>
       </section>
+
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </section>
   );
 };

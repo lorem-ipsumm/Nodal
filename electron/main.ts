@@ -53,11 +53,14 @@ const getMimeType = (ext: string): string => {
   return mimeTypes[ext] ?? "application/octet-stream";
 };
 import fs from "node:fs";
+import { spawn } from "node:child_process";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { update } from "./update";
 import Store from "electron-store";
+
+type WindowFrameStyle = "hidden" | "nodal" | "native";
 
 interface PinnedNote {
   folderName: string;
@@ -67,9 +70,13 @@ interface PinnedNote {
 
 const store = new Store<{
   workspace: string | undefined;
-  pinnedNotes: PinnedNote[];
+  pinnedNotes?: PinnedNote[];
+  windowFrameStyle: WindowFrameStyle;
 }>({
-  defaults: { workspace: undefined, pinnedNotes: [] },
+  defaults: {
+    workspace: undefined,
+    windowFrameStyle: "native",
+  },
 });
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -99,7 +106,8 @@ let win: BrowserWindow | null;
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "nodal.png"),
-    frame: false,
+    frame: store.get("windowFrameStyle") === "native" ? true : false,
+
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
     },
@@ -141,25 +149,94 @@ app.on("activate", () => {
 
 app.whenReady().then(createWindow);
 
+const workspaceMetadataPath = (workspace: string) =>
+  path.join(workspace, ".nodal", "workspace.json");
+
+const readWorkspaceMetadata = (workspace: string): Record<string, unknown> => {
+  const metadataPath = workspaceMetadataPath(workspace);
+  if (!fs.existsSync(metadataPath)) return {};
+
+  try {
+    const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
+    return metadata && typeof metadata === "object" ? metadata : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeWorkspaceMetadata = (
+  workspace: string,
+  metadata: Record<string, unknown>,
+) => {
+  const metadataDirectory = path.join(workspace, ".nodal");
+  const metadataPath = workspaceMetadataPath(workspace);
+  const temporaryPath = `${metadataPath}.tmp`;
+  fs.mkdirSync(metadataDirectory, { recursive: true });
+  fs.writeFileSync(temporaryPath, JSON.stringify(metadata, null, 2), "utf-8");
+  fs.renameSync(temporaryPath, metadataPath);
+};
+
 ipcMain.handle("get-pinned-notes", () => {
-  return store.get("pinnedNotes");
+  const workspace = store.get("workspace");
+  if (!workspace) return [];
+
+  const metadata = readWorkspaceMetadata(workspace);
+  if (Array.isArray(metadata.pinnedNotes)) return metadata.pinnedNotes;
+
+  const legacyPins = store.get("pinnedNotes") ?? [];
+  if (legacyPins.length > 0) {
+    metadata.pinnedNotes = legacyPins;
+    writeWorkspaceMetadata(workspace, metadata);
+    store.delete("pinnedNotes");
+  }
+  return legacyPins;
 });
 
 ipcMain.handle("pin-note", (_event, note: PinnedNote) => {
-  const pins = store.get("pinnedNotes");
-  if (!pins.find((p) => p.folderName === note.folderName)) {
-    store.set("pinnedNotes", [...pins, note]);
+  const workspace = store.get("workspace");
+  if (!workspace) return [];
+
+  const metadata = readWorkspaceMetadata(workspace);
+  const pins = Array.isArray(metadata.pinnedNotes)
+    ? (metadata.pinnedNotes as PinnedNote[])
+    : [];
+  if (!pins.some((pin) => pin.folderName === note.folderName && pin.folder === note.folder)) {
+    metadata.pinnedNotes = [...pins, note];
+    writeWorkspaceMetadata(workspace, metadata);
   }
-  return store.get("pinnedNotes");
+  return metadata.pinnedNotes;
 });
 
 ipcMain.handle("unpin-note", (_event, folderName: string) => {
-  const pins = store.get("pinnedNotes");
-  store.set(
-    "pinnedNotes",
-    pins.filter((p) => p.folderName !== folderName),
-  );
-  return store.get("pinnedNotes");
+  const workspace = store.get("workspace");
+  if (!workspace) return [];
+
+  const metadata = readWorkspaceMetadata(workspace);
+  const pins = Array.isArray(metadata.pinnedNotes)
+    ? (metadata.pinnedNotes as PinnedNote[])
+    : [];
+  metadata.pinnedNotes = pins.filter((note) => note.folderName !== folderName);
+  writeWorkspaceMetadata(workspace, metadata);
+  return metadata.pinnedNotes;
+});
+
+ipcMain.handle("get-app-version", () => app.getVersion());
+
+ipcMain.handle("get-window-frame-style", () => store.get("windowFrameStyle"));
+
+ipcMain.handle("set-window-frame-style", (_event, style: WindowFrameStyle) => {
+  if (!["hidden", "nodal", "native"].includes(style)) return;
+  store.set("windowFrameStyle", style);
+});
+
+ipcMain.handle("reload-app", () => {
+  const executablePath = app.getPath("exe");
+  const child = spawn(executablePath, process.argv.slice(1), {
+    detached: true,
+    stdio: "ignore",
+  });
+  child.unref();
+  app.exit(0);
 });
 
 ipcMain.handle("get-workspace", () => {
@@ -177,29 +254,22 @@ ipcMain.handle("select-workspace", async () => {
   return selectedPath;
 });
 
-const workspaceMetadataPath = (workspace: string) =>
-  path.join(workspace, ".nodal", "workspace.json");
-
 ipcMain.handle("get-workspace-metadata", (_event, workspace: string) => {
-  const metadataPath = workspaceMetadataPath(workspace);
-  if (!fs.existsSync(metadataPath)) return null;
-
-  try {
-    return JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
-  } catch {
-    return null;
-  }
+  const metadata = readWorkspaceMetadata(workspace);
+  return Object.keys(metadata).length > 0 ? metadata : null;
 });
 
 ipcMain.handle(
   "save-workspace-metadata",
-  (_event, workspace: string, metadata: unknown) => {
-    const metadataDirectory = path.join(workspace, ".nodal");
-    const metadataPath = workspaceMetadataPath(workspace);
-    const temporaryPath = `${metadataPath}.tmp`;
-    fs.mkdirSync(metadataDirectory, { recursive: true });
-    fs.writeFileSync(temporaryPath, JSON.stringify(metadata, null, 2), "utf-8");
-    fs.renameSync(temporaryPath, metadataPath);
+  (_event, workspace: string, metadata: Record<string, unknown>) => {
+    const existingMetadata = readWorkspaceMetadata(workspace);
+    writeWorkspaceMetadata(workspace, {
+      ...existingMetadata,
+      ...metadata,
+      ...(existingMetadata.pinnedNotes && !("pinnedNotes" in metadata)
+        ? { pinnedNotes: existingMetadata.pinnedNotes }
+        : {}),
+    });
   },
 );
 

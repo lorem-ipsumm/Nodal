@@ -70,6 +70,7 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
     setEditingNoteId,
     setShouldFocusInput,
     pinnedNotes,
+    highlightedNoteId,
     pinNote,
     unpinNote,
   } = useAppStore();
@@ -209,8 +210,10 @@ export const NoteItem = ({ note, isGroupStart }: NoteItemProps) => {
         <ContextMenuTrigger
           data-note-id={note.folderName}
           className={cn(
-            "group flex items-start rounded-lg px-4 hover:bg-popover relative w-full select-text",
+            "group flex items-start rounded-lg px-4 hover:bg-popover relative w-full select-text transition-colors duration-300",
             isGroupStart ? "mt-3 pt-1 pb-1" : "py-0.5",
+            highlightedNoteId === note.folderName &&
+              "bg-primary/20",
           )}
         >
           {/* Left column: avatar or hover timestamp */}

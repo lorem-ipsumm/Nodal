@@ -1,9 +1,10 @@
-import type { Note, PinnedNote } from "@/lib/types";
+import type { Note } from "@/lib/types";
 import type { Tweet } from "react-tweet/api";
 import type {
   NodalApi,
   PaginatedNotes,
   SelectedFile,
+  WindowFrameStyle,
   WorkspaceMetadata,
 } from "./nodal-api";
 
@@ -83,7 +84,6 @@ Object.entries(demoFolders).forEach(([folder, notes]) => {
   });
 });
 
-let pinnedNotes: PinnedNote[] = [];
 let workspaceMetadata: WorkspaceMetadata | null = initialWorkspaceMetadata;
 
 const folderNameFromPath = (folderPath: string) =>
@@ -150,22 +150,44 @@ const selectFiles = (): Promise<SelectedFile[]> =>
   });
 
 export const createDemoApi = (): NodalApi => ({
-  getPinnedNotes: async () => pinnedNotes,
+  getPinnedNotes: async () => workspaceMetadata?.pinnedNotes ?? [],
   pinNote: async (note) => {
-    if (!pinnedNotes.some((pin) => pin.folderName === note.folderName)) {
-      pinnedNotes = [...pinnedNotes, note];
+    const pins = workspaceMetadata?.pinnedNotes ?? [];
+    if (!pins.some((pin) => pin.folderName === note.folderName && pin.folder === note.folder)) {
+      workspaceMetadata = {
+        version: 1,
+        categories: workspaceMetadata?.categories ?? [],
+        uncategorizedFolders: workspaceMetadata?.uncategorizedFolders ?? [],
+        ...workspaceMetadata,
+        pinnedNotes: [...pins, note],
+      };
     }
-    return pinnedNotes;
+    return workspaceMetadata?.pinnedNotes ?? [];
   },
   unpinNote: async (folderName) => {
-    pinnedNotes = pinnedNotes.filter((note) => note.folderName !== folderName);
-    return pinnedNotes;
+    if (workspaceMetadata) {
+      workspaceMetadata = {
+        ...workspaceMetadata,
+        pinnedNotes: (workspaceMetadata.pinnedNotes ?? []).filter(
+          (note) => note.folderName !== folderName,
+        ),
+      };
+    }
+    return workspaceMetadata?.pinnedNotes ?? [];
   },
+  getAppVersion: async () => "1.2.0",
+  getWindowFrameStyle: async (): Promise<WindowFrameStyle> => "native",
+  setWindowFrameStyle: async () => undefined,
   getWorkspace: async () => DEMO_WORKSPACE,
   selectWorkspace: async () => DEMO_WORKSPACE,
   getWorkspaceMetadata: async () => workspaceMetadata,
   saveWorkspaceMetadata: async (_workspace, metadata) => {
-    workspaceMetadata = metadata;
+    workspaceMetadata = {
+      ...metadata,
+      ...(workspaceMetadata?.pinnedNotes && !("pinnedNotes" in metadata)
+        ? { pinnedNotes: workspaceMetadata.pinnedNotes }
+        : {}),
+    };
   },
   getFolders: async () => Object.keys(demoFolders),
   createFolder: async (folderPath) => {
