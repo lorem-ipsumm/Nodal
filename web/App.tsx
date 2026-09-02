@@ -92,14 +92,14 @@ export default function WebApp() {
         <div className="pointer-events-none sticky top-0 z-0 h-0">
           {!isBackgroundVideoLoaded && (
             <img
-              className="absolute left-0 top-0 h-[calc(100vh-1.5rem)] w-full scale-105 object-cover"
+              className="absolute left-0 top-0 h-[calc(100vh-1.5rem)] w-full scale-105 object-cover max-sm:blur-sm"
               src={backgroundFallback}
               alt=""
               aria-hidden="true"
             />
           )}
           <video
-            className="absolute left-0 top-0 h-[calc(100vh-1.5rem)] w-full scale-105 object-cover"
+            className="absolute left-0 top-0 h-[calc(100vh-1.5rem)] w-full scale-105 object-cover max-sm:blur-sm"
             src={backgroundVideo}
             autoPlay
             loop
@@ -118,10 +118,10 @@ export default function WebApp() {
             aria-hidden="true"
           />
         </div>
-        <div className="relative z-10 min-h-full">
+        <div className="relative z-10 min-h-full max-sm:pt-5">
           <main className="relative min-h-full">
             <motion.section
-              className="flex min-h-[48vh] flex-col justify-center px-12 py-16 max-lg:px-8 max-sm:min-h-[46vh] max-sm:px-5 max-sm:py-12"
+              className="flex min-h-[48vh] flex-col justify-center px-12 md:py-16 max-lg:px-8  max-sm:px-5 max-sm:pt-12"
               initial={shouldReduceMotion ? false : "hidden"}
               animate="visible"
               variants={staggerChildren}
@@ -148,7 +148,7 @@ export default function WebApp() {
 
             <motion.section
               ref={demoRef}
-              className="px-0 pb-24"
+              className="px-0 pb-24 max-sm:hidden"
               aria-label="Nodal demo"
               initial={shouldReduceMotion ? false : "hidden"}
               whileInView="visible"
@@ -177,6 +177,26 @@ export default function WebApp() {
                 </motion.div>
               </motion.div>
             </motion.section>
+
+            <section
+              className="hidden px-5 pb-16 max-sm:flex max-sm:flex-col max-sm:justify-center"
+              aria-label="Nodal mobile demo"
+            >
+              <div className="overflow-hidden rounded-xl border border-border bg-background/50 shadow-xl backdrop-blur-sm">
+                <video
+                  className="block h-auto w-full"
+                  src="/nodal-demo.webm"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  controls
+                  preload="metadata"
+                  aria-label="Nodal app demo"
+                />
+              </div>
+              <span className="text-sm text-center block mt-2">For a full demo, please visit the site on desktop</span>
+            </section>
           </main>
         </div>
       </section>

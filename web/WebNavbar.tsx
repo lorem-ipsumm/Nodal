@@ -69,18 +69,27 @@ export const WebNavbar = () => {
 
   return (
     <>
-      <header className="flex flex-col shrink-0 items-center justify-between px-4 h-full">
-        <div className="flex flex-col items-center gap-3 text-base font-semibold tracking-tight text-foreground">
+      <header className="flex flex-col shrink-0 items-center justify-between px-4 h-full max-sm:absolute max-sm:inset-x-8 max-sm:top-4 max-sm:z-20 max-sm:h-auto max-sm:flex-row max-sm:px-0 max-sm:mt-3">
+        <div className="flex flex-col items-center gap-3 text-base font-semibold tracking-tight text-foreground max-sm:flex-row">
           <img src={logo} alt="Nodal logo" className="size-8 rounded-md" />
           <Button
             aria-label="Download Nodal"
             onClick={() => setDownloadOpen(true)}
             size="icon"
+            className="max-sm:hidden"
           >
             <Download />
           </Button>
         </div>
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-2 max-sm:flex-row max-sm:gap-1">
+          <Button
+            aria-label="Download Nodal"
+            onClick={() => setDownloadOpen(true)}
+            size="icon"
+            className="sm:hidden"
+          >
+            <Download />
+          </Button>
           <Button
             aria-label="View Nodal on GitHub"
             render={
