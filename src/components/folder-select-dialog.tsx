@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Folder, Search, FolderPlus } from "lucide-react";
+import { Folder, FolderPlus, FolderTree, Hash, Search } from "lucide-react";
 import { Dialog, DialogContent } from "./ui/dialog";
 import { cn } from "@/lib/utils";
 import { CreateFolderDialog } from "./create-folder-dialog";
@@ -7,6 +7,7 @@ import { CreateFolderDialog } from "./create-folder-dialog";
 import { FolderContextMenu } from "./folder-context-menu";
 import { getNodalApi } from "@/lib/api/nodal-api";
 import { Button } from "./ui/button";
+import type { SidebarCategory } from "@/lib/hooks/store/use-sidebar-store";
 
 interface FolderSelectDialogProps {
   open: boolean;
@@ -14,6 +15,9 @@ interface FolderSelectDialogProps {
   notesDirectory: string | undefined;
   activeFolder: string | undefined;
   onSelect: (folder: string) => void;
+  onSelectCategory?: (categoryId: string | null) => void;
+  categories?: SidebarCategory[];
+  categoryMode?: boolean;
   onFolderRenamed?: (oldName: string, newName: string) => void;
   onFolderDeleted?: (folderName: string) => void;
 }
@@ -24,6 +28,9 @@ export const FolderSelectDialog = ({
   notesDirectory,
   activeFolder,
   onSelect,
+  onSelectCategory,
+  categories = [],
+  categoryMode = false,
   onFolderRenamed,
   onFolderDeleted,
 }: FolderSelectDialogProps) => {
@@ -41,6 +48,9 @@ export const FolderSelectDialog = ({
   const filtered = folders.filter((f) =>
     f.toLowerCase().includes(search.toLowerCase()),
   );
+  const filteredCategories = categories.filter((category) =>
+    category.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   const handleOpenChange = (value: boolean) => {
     onOpenChange(value);
@@ -49,7 +59,11 @@ export const FolderSelectDialog = ({
 
   const handleSelect = (folder: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    onSelect(folder);
+    if (categoryMode) {
+      onSelectCategory?.(folder);
+    } else {
+      onSelect(folder!);
+    }
     setSearch("");
   };
 
@@ -73,12 +87,44 @@ export const FolderSelectDialog = ({
               autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search folders..."
+              placeholder={categoryMode ? "Search categories..." : "Search folders..."}
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </div>
           <div className="min-h-72 max-h-72 overflow-y-auto py-1">
-            {filtered.length === 0 ? (
+            {categoryMode ? (
+              <>
+                <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectCategory?.(null);
+                      setSearch("");
+                    }}
+                    variant="ghost"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors justify-start rounded-none"
+                  >
+                    <FolderTree
+                      size={15}
+                      className="flex-shrink-0 text-muted-foreground"
+                    />
+                    Uncategorized
+                  </Button>
+                  {filteredCategories.map((category) => (
+                    <Button
+                      key={category.id}
+                      onClick={(e) => handleSelect(category.id, e)}
+                      variant="ghost"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors justify-start rounded-none"
+                    >
+                      <Hash
+                        size={15}
+                        className="flex-shrink-0 text-muted-foreground"
+                      />
+                      {category.name}
+                    </Button>
+                  ))}
+                </>
+            ) : filtered.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">
                 No folders found
               </p>

@@ -177,6 +177,54 @@ export const MarkdownEditor = forwardRef<
         Prec.highest(
           keymap.of([
             {
+              key: "Shift-Enter",
+              run: (view) => {
+                const { state } = view;
+                const { from, to } = state.selection.main;
+
+                // Let CodeMirror handle Shift+Enter normally when text is selected.
+                if (from !== to) return false;
+
+                const line = state.doc.lineAt(from);
+                const listMatch = line.text.match(
+                  /^(\s*)([-*+]|\d+[.)])([ \t]+)/,
+                );
+
+                if (!listMatch) return false;
+
+                const listPrefix = listMatch[0];
+                const content = line.text.slice(listPrefix.length);
+
+                // A second Shift+Enter on a newly-created empty item exits the list.
+                if (
+                  content.trim() === "" &&
+                  from >= line.from + listPrefix.length
+                ) {
+                  view.dispatch({
+                    changes: {
+                      from: line.from,
+                      to: line.from + listPrefix.length,
+                      insert: "",
+                    },
+                    selection: { anchor: line.from },
+                  });
+                  return true;
+                }
+
+                const marker = listMatch[2];
+                const nextMarker = /^\d/.test(marker)
+                  ? `${Number.parseInt(marker, 10) + 1}${marker.endsWith(")") ? ")" : "."}`
+                  : marker;
+                const nextPrefix = `${listMatch[1]}${nextMarker}${listMatch[3]}`;
+
+                view.dispatch({
+                  changes: { from, insert: `\n${nextPrefix}` },
+                  selection: { anchor: from + nextPrefix.length + 1 },
+                });
+                return true;
+              },
+            },
+            {
               key: "Enter",
               run: (view) => {
                 view.dispatch({

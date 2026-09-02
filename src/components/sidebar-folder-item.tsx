@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { FolderIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { FolderContextMenu } from "./folder-context-menu";
 import { useAppStore } from "@/lib/hooks/store/use-app-store";
+import { useSidebarStore } from "@/lib/hooks/store/use-sidebar-store";
+import { FolderSelectDialog } from "./folder-select-dialog";
 
 interface SidebarFolderItemProps {
   folder: string;
@@ -16,7 +19,9 @@ export const SidebarFolderItem = ({
   onRenamed,
   onDeleted,
 }: SidebarFolderItemProps) => {
-  const { activeFolder, setActiveFolder } = useAppStore();
+  const { activeFolder, setActiveFolder, notesDirectory } = useAppStore();
+  const { categories, moveFolderToCategory } = useSidebarStore();
+  const [moveCategoryOpen, setMoveCategoryOpen] = useState(false);
 
   const {
     attributes,
@@ -40,6 +45,7 @@ export const SidebarFolderItem = ({
         folder={folder}
         onRenamed={onRenamed}
         onDeleted={onDeleted}
+        onMoveToCategory={() => setMoveCategoryOpen(true)}
       >
         <Button
           className="justify-start cursor-grab active:cursor-grabbing w-full"
@@ -51,6 +57,19 @@ export const SidebarFolderItem = ({
           <span className="truncate">{folder}</span>
         </Button>
       </FolderContextMenu>
+      <FolderSelectDialog
+        open={moveCategoryOpen}
+        onOpenChange={setMoveCategoryOpen}
+        notesDirectory={notesDirectory}
+        activeFolder={folder}
+        categories={categories}
+        categoryMode
+        onSelect={() => undefined}
+        onSelectCategory={(categoryId) => {
+          moveFolderToCategory(folder, categoryId);
+          setMoveCategoryOpen(false);
+        }}
+      />
     </div>
   );
 };

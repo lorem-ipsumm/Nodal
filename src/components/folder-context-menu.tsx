@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { FolderTree, Pencil, Trash2 } from "lucide-react";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -18,6 +18,7 @@ interface FolderContextMenuProps {
   children: React.ReactNode;
   onRenamed?: (oldName: string, newName: string) => void;
   onDeleted?: (folderName: string) => void;
+  onMoveToCategory?: () => void;
 }
 
 export const FolderContextMenu = ({
@@ -25,6 +26,7 @@ export const FolderContextMenu = ({
   children,
   onRenamed,
   onDeleted,
+  onMoveToCategory,
 }: FolderContextMenuProps) => {
   const [renameOpen, setRenameOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -48,6 +50,12 @@ export const FolderContextMenu = ({
             <Pencil />
             Rename folder
           </ContextMenuItem>
+          {onMoveToCategory && (
+            <ContextMenuItem onClick={onMoveToCategory}>
+              <FolderTree />
+              Move to Category
+            </ContextMenuItem>
+          )}
           <ContextMenuSeparator />
           <ContextMenuItem
             variant="destructive"
