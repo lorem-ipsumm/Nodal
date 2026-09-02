@@ -1,9 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  RiAppleLine,
-  RiGithubLine,
-  RiWindowsLine,
-} from "@remixicon/react";
+import { RiAppleLine, RiGithubLine, RiWindowsLine } from "@remixicon/react";
 import { Button } from "../src/components/ui/button";
 import logo from "../src/assets/nodal.png";
 import {
@@ -34,7 +30,9 @@ const osIcons = {
 export const WebNavbar = () => {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [operatingSystem] = useState<OperatingSystem>(getOperatingSystem);
-  const [releaseAssets, setReleaseAssets] = useState<Record<string, string>>({});
+  const [releaseAssets, setReleaseAssets] = useState<Record<string, string>>(
+    {},
+  );
   const OperatingSystemIcon = osIcons[operatingSystem];
   const releasesUrl = "https://github.com/lorem-ipsumm/Nodal/releases/latest";
   const releasesPageUrl = "https://github.com/lorem-ipsumm/Nodal/releases";
@@ -45,7 +43,10 @@ export const WebNavbar = () => {
       .then((release) => {
         if (!release?.assets) return;
 
-        const assets = release.assets as { name: string; browser_download_url: string }[];
+        const assets = release.assets as {
+          name: string;
+          browser_download_url: string;
+        }[];
         const matchingAssets: Record<string, string> = {};
         assets.forEach(({ name, browser_download_url }) => {
           if (name.includes("-Mac-") && name.endsWith(".dmg")) {
