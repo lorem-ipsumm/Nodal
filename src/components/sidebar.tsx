@@ -39,6 +39,12 @@ import { CreateCategoryDialog } from "./create-category-dialog";
 import { SidebarFolderItem } from "./sidebar-folder-item";
 import { SidebarCategorySection } from "./sidebar-category";
 import { SettingsDialog } from "./settings-dialog";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "./ui/context-menu";
 import { getNodalApi, type WorkspaceMetadata } from "@/lib/api/nodal-api";
 
 const normalizeWorkspaceMetadata = (
@@ -435,7 +441,8 @@ export const Sidebar = () => {
             </div>
 
             {/* Sortable list */}
-            <div className="mt-1 flex-1 overflow-y-auto flex flex-col gap-1 scrollbar-hidden">
+            <ContextMenu>
+              <ContextMenuTrigger className="mt-1 flex-1 overflow-y-auto flex flex-col gap-1 scrollbar-hidden">
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -483,7 +490,18 @@ export const Sidebar = () => {
                   )}
                 </DragOverlay>
               </DndContext>
-            </div>
+              </ContextMenuTrigger>
+              <ContextMenuContent>
+                <ContextMenuItem onClick={() => setCreateCategoryOpen(true)}>
+                  <Hash />
+                  Create Category
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => setCreateOpen(true)}>
+                  <FolderPlusIcon />
+                  Create Folder
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
           </div>
         )}
       </section>

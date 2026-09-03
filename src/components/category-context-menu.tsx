@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { FolderPlus, Pencil, Trash2 } from "lucide-react";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -11,6 +11,7 @@ import { Dialog } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { ConfirmationDialog } from "./ui/confirmation-dialog";
 import { useSidebarStore } from "@/lib/hooks/store/use-sidebar-store";
+import { CreateFolderDialog } from "./create-folder-dialog";
 
 interface CategoryContextMenuProps {
   categoryId: string;
@@ -25,8 +26,10 @@ export const CategoryContextMenu = ({
 }: CategoryContextMenuProps) => {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [name, setName] = useState("");
-  const { renameCategory, removeCategory } = useSidebarStore();
+  const { renameCategory, removeCategory, moveFolderToCategory } =
+    useSidebarStore();
 
   useEffect(() => {
     if (renameOpen) setName(categoryName);
@@ -52,6 +55,10 @@ export const CategoryContextMenu = ({
           <ContextMenuItem onClick={() => setRenameOpen(true)}>
             <Pencil />
             Rename category
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => setCreateFolderOpen(true)}>
+            <FolderPlus />
+            Create Folder
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem
@@ -82,6 +89,14 @@ export const CategoryContextMenu = ({
           action={handleRename}
         />
       </Dialog>
+
+      <CreateFolderDialog
+        open={createFolderOpen}
+        onOpenChange={setCreateFolderOpen}
+        onCreated={(folderName) =>
+          moveFolderToCategory(folderName, categoryId)
+        }
+      />
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
